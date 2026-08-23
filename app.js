@@ -351,12 +351,123 @@ $("backBtn").onclick=()=>{
   }
 };
 
-const WANDER_CONTENT={sound:[{type:"SONG",title:"Start with a song you didn't expect.",body:"Listen without analyzing it. Notice the first thing your body reacts to. The rhythm, the texture, the voice, the space."},{type:"SOUND",title:"Find music inside an ordinary sound.",body:"A machine. A room. A voice. A mistake. What happens when you stop asking what it is and start asking what it could become?"},{type:"PROCESS",title:"The studio is allowed to be uncertain.",body:"Creative work does not always begin with an answer. Sometimes the useful move is changing the question, changing the sound, or leaving the mistake alone."},{type:"PROCESS",title:"Listen to somebody explain how they make.",body:"A producer, musician, engineer, or artist describing the moment something finally clicked can be as inspiring as the finished work."}],words:[{type:"LINE",title:"Follow a sentence.",body:"Find one sentence that makes you stop. Don't explain why. Let the sentence lead you somewhere else."},{type:"STORY",title:"A story can become a sample.",body:"A line from someone's life can become a lyric, a scene, a visual, a rhythm, or an entire project."},{type:"WORDS",title:"Read something outside your lane.",body:"A paragraph from a writer, artist, scientist, poet, or stranger can change the shape of an idea you were already carrying."}],film:[{type:"SCENE",title:"Watch the moment before the moment.",body:"Find a scene where almost nothing happens. Pay attention to what the camera, silence, framing, and timing make you feel."},{type:"PROCESS",title:"Study the choice, not the spectacle.",body:"Look for a filmmaking decision you would not have made. That's often where the useful inspiration lives."},{type:"STORY",title:"Let a scene change the question.",body:"Don't ask what the scene means yet. Ask what it makes you curious about."}],visuals:[{type:"IMAGE",title:"Follow the texture.",body:"Find an image you can almost feel. Follow its light, color, texture, imperfection, or composition."},{type:"COLOR",title:"Let a color start the world.",body:"Pick a color you wouldn't normally use. Imagine the room, song, person, film, or memory that belongs inside it."},{type:"REFERENCE",title:"See something you would never have searched for.",body:"The useful reference is sometimes the one you didn't know existed."}],thoughts:[{type:"QUESTION",title:"Borrow a question, not an answer.",body:"What is something you believe because somebody else taught you to believe it?"},{type:"THOUGHT",title:"Make the obvious strange.",body:"Take something completely normal in your life and imagine you have never seen it before."},{type:"PERSPECTIVE",title:"Enter somebody else's world for a minute.",body:"Find a perspective you don't naturally share. Don't debate it. Wander around inside it."}],unsure:[{type:"SURPRISE",title:"You don't have to know.",body:"Start anywhere. A sound. A face. A color. A sentence. A memory. Something you saw today. Follow whatever catches you."},{type:"SURPRISE",title:"Go toward the thing you can't name.",body:"The fact that you don't know what you're looking for is enough. Let the first spark choose the direction."},{type:"SURPRISE",title:"Open a door you weren't looking for.",body:"The next useful thing may have nothing to do with what you thought you came here for."}]};
-let wanderCategory=null,wanderTrail=[];
-function showWanderCard(item){const box=$("wanderResult");box.classList.remove("hidden");box.innerHTML=`<div class="result-kicker">${esc(item.type)}</div><div class="result-title">${esc(item.title)}</div><div class="result-body">${esc(item.body)}</div><div class="result-actions"><button class="ghost" id="wanderKeepBtn" type="button">KEEP</button><button class="primary" id="wanderNextBtn" type="button">WANDER</button></div>`;$("wanderNextBtn").onclick=wanderNext;$('wanderKeepBtn').onclick=()=>wanderKeep(item)}
-function wanderNext(){const pool=WANDER_CONTENT[wanderCategory]||WANDER_CONTENT.unsure;const item=pool[Math.floor(Math.random()*pool.length)];wanderTrail.push({category:wanderCategory,...item});showWanderCard(item)}
-function wanderKeep(item){const n=document.createElement("p");n.className="small muted";n.textContent="Kept in this wander. Personal collection comes next.";$("wanderResult").appendChild(n)}
-document.querySelectorAll("[data-wander-category]").forEach(b=>b.onclick=()=>{wanderCategory=b.dataset.wanderCategory;wanderTrail=[];wanderNext()});
+const WANDER_CONTENT={
+  sound:[
+    {type:"SONG",title:"Start with a song you didn't expect.",body:"Listen without analyzing it. Notice the first thing your body reacts to. The rhythm, the texture, the voice, the space."},
+    {type:"SOUND",title:"Find music inside an ordinary sound.",body:"A machine. A room. A voice. A mistake. What happens when you stop asking what it is and start asking what it could become?"},
+    {type:"PROCESS",title:"The studio is allowed to be uncertain.",body:"Creative work does not always begin with an answer. Sometimes the useful move is changing the question, changing the sound, or leaving the mistake alone."},
+    {type:"PROCESS",title:"Listen to somebody explain how they make.",body:"A producer, musician, engineer, or artist describing the moment something finally clicked can be as inspiring as the finished work."}
+  ],
+  words:[
+    {type:"LINE",title:"Follow a sentence.",body:"Find one sentence that makes you stop. Don't explain why. Let the sentence lead you somewhere else."},
+    {type:"STORY",title:"A story can become a sample.",body:"A line from someone's life can become a lyric, a scene, a visual, a rhythm, or an entire project."},
+    {type:"WORDS",title:"Read something outside your lane.",body:"A paragraph from a writer, artist, scientist, poet, or stranger can change the shape of an idea you were already carrying."}
+  ],
+  film:[
+    {type:"SCENE",title:"Watch the moment before the moment.",body:"Find a scene where almost nothing happens. Pay attention to what the camera, silence, framing, and timing make you feel."},
+    {type:"PROCESS",title:"Study the choice, not the spectacle.",body:"Look for a filmmaking decision you would not have made. That's often where the useful inspiration lives."},
+    {type:"STORY",title:"Let a scene change the question.",body:"Don't ask what the scene means yet. Ask what it makes you curious about."}
+  ],
+  visuals:[
+    {type:"IMAGE",title:"Follow the texture.",body:"Find an image you can almost feel. Follow its light, color, texture, imperfection, or composition."},
+    {type:"COLOR",title:"Let a color start the world.",body:"Pick a color you wouldn't normally use. Imagine the room, song, person, film, or memory that belongs inside it."},
+    {type:"REFERENCE",title:"See something you would never have searched for.",body:"The useful reference is sometimes the one you didn't know existed."}
+  ],
+  thoughts:[
+    {type:"QUESTION",title:"Borrow a question, not an answer.",body:"What is something you believe because somebody else taught you to believe it?"},
+    {type:"THOUGHT",title:"Make the obvious strange.",body:"Take something completely normal in your life and imagine you have never seen it before."},
+    {type:"PERSPECTIVE",title:"Enter somebody else's world for a minute.",body:"Find a perspective you don't naturally share. Don't debate it. Wander around inside it."}
+  ],
+  unsure:[
+    {type:"SURPRISE",title:"You don't have to know.",body:"Start anywhere. A sound. A face. A color. A sentence. A memory. Something you saw today. Follow whatever catches you."},
+    {type:"SURPRISE",title:"Go toward the thing you can't name.",body:"The fact that you don't know what you're looking for is enough. Let the first spark choose the direction."},
+    {type:"SURPRISE",title:"Open a door you weren't looking for.",body:"The next useful thing may have nothing to do with what you thought you came here for."}
+  ]
+};
+
+let wanderCategory=null;
+let wanderTrail=[];
+let wanderCurrent=null;
+
+function pickWanderItem(category){
+  const pool=WANDER_CONTENT[category]||WANDER_CONTENT.unsure;
+  const candidates=pool.filter(item=>item.title!==wanderCurrent?.title);
+  return candidates[Math.floor(Math.random()*candidates.length)]||pool[0];
+}
+
+function renderWanderItem(item){
+  $("wanderResult").innerHTML=
+    `<div class="result-kicker">${esc(item.type)}</div>
+     <div class="result-title">${esc(item.title)}</div>
+     <div class="result-body">${esc(item.body)}</div>`;
+}
+
+function enterWander(category){
+  wanderCategory=category;
+  wanderTrail=[];
+  wanderCurrent=pickWanderItem(category);
+
+  $("wanderLanding").classList.add("hidden");
+  $("wanderImmersion").classList.remove("hidden");
+  $("wanderCategory").textContent=category==="unsure"?"I'M NOT SURE":category.toUpperCase();
+
+  // Select before the visual transition so entering a world never waits for content.
+  renderWanderItem(wanderCurrent);
+  wanderTrail.push({category,item:wanderCurrent,at:nowISO()});
+}
+
+function advanceWander(){
+  if(!wanderCategory)return;
+  wanderCurrent=pickWanderItem(wanderCategory);
+  wanderTrail.push({category:wanderCategory,item:wanderCurrent,at:nowISO()});
+  renderWanderItem(wanderCurrent);
+}
+
+function keepWanderItem(){
+  if(!wanderCurrent)return;
+  state.ideas.push({
+    id:crypto.randomUUID(),
+    title:wanderCurrent.title,
+    body:wanderCurrent.body,
+    createdAt:nowISO(),
+    source:null,
+    wanderCategory
+  });
+  save();
+  renderFound();
+  advanceWander();
+}
+
+function leaveWanderWorld(){
+  wanderCategory=null;
+  wanderCurrent=null;
+  $("wanderImmersion").classList.add("hidden");
+  $("wanderLanding").classList.remove("hidden");
+}
+
+function showWanderTrail(){
+  const box=$("wanderResult");
+  if(!wanderTrail.length)return;
+  const original=box.innerHTML;
+  const rows=wanderTrail.map((step,i)=>
+    `<div class="trail-row"><span>${i+1}</span><div><strong>${esc(step.item.title)}</strong><small>${esc(step.category)}</small></div></div>`
+  ).join("");
+  box.innerHTML=
+    `<div class="result-kicker">YOUR TRAIL</div>
+     <div class="result-title">Where you went.</div>
+     <div class="trail-list">${rows}</div>
+     <button id="closeTrailBtn" class="ghost" type="button">BACK TO THIS MOMENT</button>`;
+  $("closeTrailBtn").onclick=()=>{box.innerHTML=original;};
+}
+
+document.querySelectorAll("[data-wander-category]").forEach(button=>{
+  button.onclick=()=>enterWander(button.dataset.wanderCategory);
+});
+$("wanderNextBtn").onclick=advanceWander;
+$("wanderKeepBtn").onclick=keepWanderItem;
+$("wanderBackBtn").onclick=leaveWanderWorld;
+$("wanderTrailBtn").onclick=showWanderTrail;
+
 $("ideaForm").onsubmit=e=>{
   e.preventDefault();
   const t=$("ideaInput").value.trim(),b=$("ideaBodyInput").value.trim();

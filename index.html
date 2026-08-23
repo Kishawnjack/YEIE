@@ -8,7 +8,36 @@
 <section id="entryView" class="view"><div class="section-head"><button id="backBtn" class="back">← Journal</button><span id="entryStatus" class="muted">Private</span></div>
 <div id="entryMeta" class="entry-meta"></div><form id="entryForm"><label class="sr-only" for="bodyInput">Journal entry</label>
 <textarea id="bodyInput" rows="18" placeholder="What's on your mind?"></textarea><div class="form-actions"><span id="lockMessage" class="muted small"></span></div></form></section>
-<section id="wanderView" class="view"><div class="wander-hero"><div class="eyebrow">WANDER</div><h2>GET LOST IN</h2><p>No destination necessary.</p></div><div class="path-grid"><button class="path-card" data-wander-category="sound"><span>◌</span><b>SOUND</b><small>songs · samples · voices · process</small></button><button class="path-card" data-wander-category="words"><span>—</span><b>WORDS</b><small>lines · stories · language</small></button><button class="path-card" data-wander-category="film"><span>◇</span><b>FILM</b><small>scenes · motion · stories</small></button><button class="path-card" data-wander-category="visuals"><span>◉</span><b>VISUALS</b><small>images · color · texture</small></button><button class="path-card" data-wander-category="thoughts"><span>?</span><b>THOUGHTS</b><small>questions · perspectives · ideas</small></button><button class="path-card" data-wander-category="unsure"><span>…</span><b>I'M NOT SURE</b><small>let the rabbit hole choose</small></button></div><div id="wanderResult" class="wander-result hidden"></div></section>
+<section id="wanderView" class="view">
+<div class="wander-world" id="wanderWorld">
+  <div class="wander-world-top">
+    <button id="wanderBackBtn" class="back" type="button">← WANDER</button>
+    <div id="wanderWorldLabel" class="eyebrow">WANDER</div>
+    <button id="wanderTrailBtn" class="icon-btn" type="button" aria-label="View trail">◎</button>
+  </div>
+  <div id="wanderLanding" class="wander-landing">
+    <div class="eyebrow">WANDER</div>
+    <h2>GET LOST IN</h2>
+    <p class="muted">No destination necessary.</p>
+    <div class="path-grid">
+      <button class="path-card" data-wander-category="sound" type="button"><span>◌</span><b>SOUND</b><small>songs · samples · voices · process</small></button>
+      <button class="path-card" data-wander-category="words" type="button"><span>—</span><b>WORDS</b><small>lines · stories · language</small></button>
+      <button class="path-card" data-wander-category="film" type="button"><span>◇</span><b>FILM</b><small>scenes · motion · stories</small></button>
+      <button class="path-card" data-wander-category="visuals" type="button"><span>◉</span><b>VISUALS</b><small>images · color · texture</small></button>
+      <button class="path-card" data-wander-category="thoughts" type="button"><span>?</span><b>THOUGHTS</b><small>questions · perspectives · ideas</small></button>
+      <button class="path-card" data-wander-category="unsure" type="button"><span>…</span><b>I'M NOT SURE</b><small>let the rabbit hole choose</small></button>
+    </div>
+  </div>
+  <div id="wanderImmersion" class="wander-immersion hidden" aria-live="polite">
+    <div id="wanderCategory" class="eyebrow"></div>
+    <div id="wanderResult"></div>
+    <div class="wander-actions">
+      <button id="wanderKeepBtn" class="wander-action wander-keep" type="button">KEEP</button>
+      <button id="wanderNextBtn" class="wander-action wander-go" type="button">WANDER →</button>
+    </div>
+  </div>
+</div>
+</section>
 <section id="ideaView" class="view"><div class="section-head"><button id="ideaBackBtn" class="back">← Wander</button><span class="muted">Private</span></div><div id="ideaTrail" class="trail"></div>
 <form id="ideaForm"><label for="ideaInput">Capture what you found<input id="ideaInput" maxlength="200" placeholder="Give the thought a shape..."></label>
 <label for="ideaBodyInput">Keep wandering<textarea id="ideaBodyInput" rows="10" placeholder="Write, question, sketch in words, follow the thread..."></textarea></label>
@@ -32,5 +61,5 @@
 <button id="keepBtn" class="primary" type="button">KEEP IT</button>
 </div>
 </div></div>
-<div id="privacyModal" class="modal hidden"><div class="modal-card"><button id="closeModal" class="close">×</button><h2>🔒 Private by design</h2><p>YEIE V0.3.0 keeps journal entries and opens WANDER in this browser on this device. There is no account, sharing, or cloud sync yet.</p><p class="muted small">Unfinished journal drafts are autosaved while you write. Clearing browser/site data can erase local entries and drafts.</p></div></div>
+<div id="privacyModal" class="modal hidden"><div class="modal-card"><button id="closeModal" class="close">×</button><h2>🔒 Private by design</h2><p>YEIE V0.3.1 keeps journal entries and opens WANDER in this browser on this device. There is no account, sharing, or cloud sync yet.</p><p class="muted small">Unfinished journal drafts are autosaved while you write. Clearing browser/site data can erase local entries and drafts.</p></div></div>
 <script src="app.js"></script></body></html>
