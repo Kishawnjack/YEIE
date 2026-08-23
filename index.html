@@ -1,113 +1,78 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#111111">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
-  <title>YEIE — Private Journal</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0c0c">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+<title>YEIE — Private Journal</title>
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div>
-        <div class="eyebrow">YOUR EVERYONE ISN'T EVERYONE</div>
-        <h1>YEIE</h1>
-      </div>
-      <button id="lockBtn" class="icon-btn" title="Privacy note">🔒</button>
-    </header>
+<main class="app">
+<header class="topbar">
+<div><div class="eyebrow">YOUR EVERYONE ISN'T EVERYONE</div><h1>YEIE</h1></div>
+<button id="lockBtn" class="icon-btn" aria-label="Privacy information">🔒</button>
+</header>
 
-    <section id="homeView" class="view active">
-      <div class="hero">
-        <p class="muted">Your private place to document the journey.</p>
-        <button id="newEntryBtn" class="primary">+ New Entry</button>
-      </div>
+<section id="homeView" class="view active">
+<div class="hero"><p class="muted">Your private place to document the journey.</p>
+<button id="newEntryBtn" class="primary">+ New Entry</button></div>
+<div class="section-head"><h2>Recent</h2><span id="entryCount" class="count">0</span></div>
+<div id="recentEntries" class="entries empty-state"><p>Nothing here yet.</p><p>Write without worrying about what to call it.</p></div>
+</section>
 
-      <div class="section-head">
-        <h2>Recent</h2>
-        <span id="entryCount" class="count">0</span>
-      </div>
-      <div id="recentEntries" class="entries empty-state">
-        <p>No entries yet.</p>
-        <p>Start with whatever is on your mind.</p>
-      </div>
-    </section>
+<section id="entryView" class="view">
+<div class="section-head"><button id="backBtn" class="back">← Journal</button><span id="entryStatus" class="muted">Private</span></div>
+<div id="entryMeta" class="entry-meta"></div>
+<form id="entryForm">
+<label class="sr-only" for="bodyInput">Journal entry</label>
+<textarea id="bodyInput" rows="18" placeholder="What's on your mind?"></textarea>
+<div class="form-actions"><span id="lockMessage" class="muted small"></span><button type="submit" id="saveEntryBtn" class="primary">Save Entry</button></div>
+</form>
+</section>
 
-    <section id="entryView" class="view">
-      <div class="section-head">
-        <button id="backBtn" class="back">← Back</button>
-        <span class="muted">Private</span>
-      </div>
-      <form id="entryForm">
-        <div id="entryMeta" class="entry-meta"></div>
-        <label>Journal
-          <textarea id="bodyInput" rows="16" placeholder="What's on your mind?"></textarea>
-        </label>
-        <div class="form-actions">
-          
-          <button type="submit" class="primary">Save Entry</button>
-        </div>
-      </form>
-    </section>
+<section id="wanderView" class="view">
+<div class="wander-hero"><div class="eyebrow">NO DESTINATION REQUIRED</div><h2>WANDER</h2><p>Don't know what you're looking for? Good.</p></div>
+<button id="lostBtn" class="lost-card"><span class="lost-mark">?</span><span><strong>I'm stuck.</strong><small>Give me somewhere to start.</small></span><span>→</span></button>
+<div class="path-grid">
+<button class="path-card" data-path="sound"><span>◌</span><b>HEAR</b><small>sound · music · samples</small></button>
+<button class="path-card" data-path="image"><span>◇</span><b>SEE</b><small>film · images · references</small></button>
+<button class="path-card" data-path="words"><span>—</span><b>WRITE</b><small>lyrics · lines · language</small></button>
+<button class="path-card" data-path="question"><span>?</span><b>QUESTION</b><small>follow a thought</small></button>
+<button class="path-card" data-path="story"><span>↗</span><b>FOLLOW</b><small>see where it leads</small></button>
+</div>
+<div id="wanderResult" class="wander-result hidden"></div>
+</section>
 
-    <section id="ideasView" class="view">
-      <div class="hero compact">
-        <h2>WANDER</h2>
-        <p class="muted">Keep the sparks before they disappear.</p>
-        <button id="newIdeaBtn" class="primary">+ Follow a Thought</button>
-      </div>
-      <div id="ideasList" class="entries empty-state">
-        <p>No ideas yet.</p>
-      </div>
-    </section>
+<section id="ideaView" class="view">
+<div class="section-head"><button id="ideaBackBtn" class="back">← Wander</button><span class="muted">Private</span></div>
+<div id="ideaTrail" class="trail"></div>
+<form id="ideaForm">
+<label for="ideaInput">Capture what you found<input id="ideaInput" maxlength="200" placeholder="Give the thought a shape..."></label>
+<label for="ideaBodyInput">Keep wandering<textarea id="ideaBodyInput" rows="10" placeholder="Write, question, sketch in words, follow the thread..."></textarea></label>
+<div class="form-actions"><span class="muted small">Saved to Found</span><button type="submit" class="primary">Keep It</button></div>
+</form>
+</section>
 
-    <section id="ideaView" class="view">
-      <div class="section-head">
-        <button id="ideaBackBtn" class="back">← Back</button>
-        <span class="muted">Private</span>
-      </div>
-      <form id="ideaForm">
-        <label>Idea <input id="ideaInput" maxlength="200" placeholder="The thought..."></label>
-        <label>More
-          <textarea id="ideaBodyInput" rows="10" placeholder="Anything else you want to remember..."></textarea>
-        </label>
-        <div class="form-actions">
-          <button type="button" id="ideaDeleteBtn" class="danger hidden">Delete</button>
-          <button type="submit" class="primary">Save Idea</button>
-        </div>
-      </form>
-    </section>
+<section id="ideasView" class="view">
+<div class="wander-hero compact"><div class="eyebrow">THINGS WORTH FOLLOWING</div><h2>FOUND</h2><p>Your saved sparks from wandering.</p></div>
+<div id="ideasList" class="entries empty-state"><p>You haven't found anything yet.</p><p>Go wander. Follow something.</p></div>
+</section>
 
+<nav class="nav">
+<button data-view="homeView" class="nav-btn active">⌂<span>Journal</span></button>
+<button data-view="wanderView" class="nav-btn">✦<span>Wander</span></button>
+<button data-view="ideasView" class="nav-btn">↗<span>Found</span></button>
+</nav>
+</main>
 
-    <section id="wanderView" class="view">
-      <div class="wander-hero"><div class="eyebrow">NO DESTINATION REQUIRED</div><h2>WANDER</h2><p>Don't know what you're looking for? Good.</p></div>
-      <button id="lostBtn" class="lost-card"><span class="lost-mark">?</span><span><strong>I'm stuck.</strong><small>Give me somewhere to start.</small></span><span>→</span></button>
-      <div class="path-grid">
-        <button class="path-card" data-path="sound"><span>◌</span><b>HEAR</b><small>sound · music · samples</small></button>
-        <button class="path-card" data-path="image"><span>◇</span><b>SEE</b><small>film · images · references</small></button>
-        <button class="path-card" data-path="words"><span>—</span><b>WRITE</b><small>lyrics · lines · language</small></button>
-        <button class="path-card" data-path="question"><span>?</span><b>QUESTION</b><small>follow a thought</small></button>
-        <button class="path-card" data-path="story"><span>↗</span><b>FOLLOW</b><small>see where it leads</small></button>
-      </div>
-      <div id="wanderResult" class="wander-result hidden"></div>
-    </section>
-
-    <nav class="nav">
-      <button data-view="homeView" class="nav-btn active">⌂<span>Journal</span></button>
-      <button data-view="wanderView" class="nav-btn">✦<span>Wander</span></button>
-    </nav>
-  </main>
-
-  <div id="privacyModal" class="modal hidden">
-    <div class="modal-card">
-      <button id="closeModal" class="close">×</button>
-      <h2>🔒 Private by design</h2>
-      <p>YEIE V0.1 stores entries only in this browser on this device. There is no account, sharing, or cloud sync in this first version.</p>
-      <p class="muted small">Important: clearing browser/site data can erase your entries. This is a prototype, not a secure vault.</p>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+<div id="privacyModal" class="modal hidden"><div class="modal-card">
+<button id="closeModal" class="close" aria-label="Close">×</button>
+<h2>🔒 Private by design</h2>
+<p>YEIE V0.2.1 keeps journal entries and found ideas in this browser on this device. There is no account, sharing, or cloud sync yet.</p>
+<p class="muted small">This prototype is not a secure vault. Clearing browser/site data can erase local entries.</p>
+</div></div>
+<script src="app.js"></script>
 </body>
 </html>
