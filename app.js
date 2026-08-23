@@ -1,6 +1,6 @@
 const KEY="yeie_v01", DRAFT_KEY="yeie_current_draft_v027", LOCK_HOURS=24;
 const $=id=>document.getElementById(id);
-let state, editingEntryId=null, autosaveTimer=null, countdownTimer=null;
+let state, editingEntryId=null, autosaveTimer=null, countdownTimer=null, draftTimer=null;
 
 try{
   state=JSON.parse(localStorage.getItem(KEY)||'{"entries":[],"ideas":[]}');
