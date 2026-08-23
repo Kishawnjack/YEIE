@@ -1,6 +1,6 @@
 const KEY="yeie_v01", LOCK_HOURS=24;
 const $=id=>document.getElementById(id);
-let state, editingEntryId=null, autosaveTimer=null, countdownTimer=null, pendingDraftBody="";
+let state, editingEntryId=null, autosaveTimer=null, countdownTimer=null;
 
 try{
   state=JSON.parse(localStorage.getItem(KEY)||'{"entries":[],"ideas":[]}');
@@ -130,7 +130,6 @@ function startCountdown(){
 function createEntry(){
   stopTimers();
   editingEntryId=null;
-  pendingDraftBody="";
   $("bodyInput").value="";
   $("entryMeta").textContent="BEGIN";
   $("entryStatus").textContent="Private · draft";
@@ -139,14 +138,11 @@ function createEntry(){
   showView("entryView");
 
   $("bodyInput").oninput=()=>{
-    pendingDraftBody=$("bodyInput").value;
-    if(pendingDraftBody.trim()){
-      $("entryStatus").textContent="Private · draft";
-      $("lockMessage").textContent="Draft autosaved on this device.";
-    }else{
-      $("entryStatus").textContent="Private · draft";
-      $("lockMessage").textContent="Write freely. Nothing becomes permanent until you keep it.";
-    }
+    const body=$("bodyInput").value;
+    $("entryStatus").textContent="Private · draft";
+    $("lockMessage").textContent=body.trim()
+      ? "Draft autosaved on this device."
+      : "Write freely. Nothing becomes permanent until you keep it.";
   };
 
   setTimeout(()=>$("bodyInput").focus(),50);
@@ -155,24 +151,27 @@ function createEntry(){
 function keepDraft(){
   const body=$("bodyInput").value.trim();
   if(!body){
-    closeKeepModal();
+    letDraftGo();
     return;
   }
+
   const entry={
     id:crypto.randomUUID(),
     body,
     createdAt:nowISO()
   };
+
   state.entries.push(entry);
   save();
   editingEntryId=entry.id;
-  pendingDraftBody="";
+
   $("entryMeta").textContent=formatDate(entry.createdAt);
   $("entryStatus").textContent="Private · started";
   $("lockMessage").textContent="Saved · locks in 24 hours";
+
+  closeKeepModal();
   startAutosave();
   startCountdown();
-  closeKeepModal();
 }
 
 function openKeepModal(){
@@ -184,7 +183,6 @@ function closeKeepModal(){
 }
 
 function letDraftGo(){
-  pendingDraftBody="";
   $("bodyInput").value="";
   closeKeepModal();
   stopTimers();
@@ -226,12 +224,8 @@ $("backBtn").onclick=()=>{
     return;
   }
 
-  if(body){
-    pendingDraftBody=body;
-    openKeepModal();
-  }else{
-    letDraftGo();
-  }
+  if(body) openKeepModal();
+  else letDraftGo();
 };
 
 const wander={
@@ -293,7 +287,9 @@ $("privacyModal").onclick=e=>{if(e.target.id==="privacyModal")$("privacyModal").
 
 $("keepBtn").onclick=keepDraft;
 $("letGoBtn").onclick=letDraftGo;
-$("keepModal").onclick=e=>{if(e.target.id==="keepModal")closeKeepModal();
+$("keepModal").onclick=e=>{
+  if(e.target.id==="keepModal") closeKeepModal();
+};
 
 renderJournal();
 renderFound();
