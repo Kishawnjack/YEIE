@@ -1,4 +1,4 @@
-const KEY="yeie_v01", LOCK_HOURS=24;
+const KEY="yeie_v01", DRAFT_KEY="yeie_current_draft_v027", LOCK_HOURS=24;
 const $=id=>document.getElementById(id);
 let state, editingEntryId=null, autosaveTimer=null, countdownTimer=null;
 
@@ -127,51 +127,170 @@ function startCountdown(){
   updateLockCountdown();
 }
 
-function createEntry(){
-  stopTimers();
-  editingEntryId=null;
-  $("bodyInput").value="";
-  $("entryMeta").textContent="BEGIN";
-  $("entryStatus").textContent="Private · draft";
-  $("lockMessage").textContent="Write freely. Nothing becomes permanent until you keep it.";
-  $("bodyInput").disabled=false;
-  showView("entryView");
-
-  $("bodyInput").oninput=()=>{
-    const body=$("bodyInput").value;
-    $("entryStatus").textContent="Private · draft";
-    $("lockMessage").textContent=body.trim()
-      ? "Draft autosaved on this device."
-      : "Write freely. Nothing becomes permanent until you keep it.";
-  };
-
-  setTimeout(()=>$("bodyInput").focus(),50);
+function readDraft(){
+  try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||"null")}catch{return null}
 }
 
-function keepDraft(){
-  const body=$("bodyInput").value.trim();
-  if(!body){
+function saveDraft(){
+  const body=$("bodyInput").value;
+  if(!body.trim())return;
+  const existing=readDraft();
+  const draft={
+    body,
+    startedAt:existing?.startedAt||nowISO(),
+    updatedAt:nowISO()
+  };
+  localStorage.setItem(DRAFT_KEY,JSON.stringify(draft));
+  $("lockMessage").textContent=`Draft autosaved · ${timeLeftLabel({createdAt:draft.startedAt})}`;
+}
+
+function clearDraft(){
+  localStorage.removeItem(DRAFT_KEY);
+}
+
+function draftExpired(draft){
+  return !draft || (Date.now()-new Date(draft.startedAt).getTime()>=LOCK_HOURS*3600000);
+}
+
+function startDraftAutosave(){
+  clearInterval(draftTimer);
+  draftTimer=setInterval(saveDraft,1000);
+}
+
+function stopDraftAutosave(){
+  clearInterval(draftTimer);
+  draftTimer=null;
+}
+
+function draftTimeLeft(draft){
+  return timeLeftLabel({createdAt:draft.startedAt});
+}
+
+function showDraftModal(){
+  $("draftModal").classList.remove("hidden");
+}
+
+function closeDraftModal(){
+  $("draftModal").classList.add("hidden");
+}
+
+function loadDraftIntoEditor(){
+  const draft=readDraft();
+  if(!draft || draftExpired(draft))return false;
+
+  stopTimers();
+  stopDraftAutosave();
+  editingEntryId=null;
+  $("bodyInput").value=draft.body;
+  $("entryMeta").textContent=formatDate(draft.startedAt);
+  $("entryStatus").textContent="Private · draft";
+  $("lockMessage").textContent=`Draft · ${draftTimeLeft(draft)}`;
+  $("bodyInput").disabled=false;
+  showView("entryView");
+  startDraftAutosave();
+  setTimeout(()=>$("bodyInput").focus(),50);
+  return true;
+}
+
+function keepDraftAsEntry(){
+  const draft=readDraft();
+  if(!draft || !draft.body.trim()){
     letDraftGo();
     return;
   }
 
   const entry={
     id:crypto.randomUUID(),
-    body,
-    createdAt:nowISO()
+    body:draft.body.trim(),
+    createdAt:draft.startedAt
   };
-
   state.entries.push(entry);
   save();
+  clearDraft();
   editingEntryId=entry.id;
+  closeDraftModal();
+  stopDraftAutosave();
 
+  $("bodyInput").value=entry.body;
   $("entryMeta").textContent=formatDate(entry.createdAt);
   $("entryStatus").textContent="Private · started";
-  $("lockMessage").textContent="Saved · locks in 24 hours";
-
-  closeKeepModal();
+  $("lockMessage").textContent=`Saved · ${timeLeftLabel(entry)}`;
   startAutosave();
   startCountdown();
+}
+
+function letDraftGo(){
+  clearDraft();
+  pendingDraftBody="";
+  closeDraftModal();
+  stopDraftAutosave();
+  stopTimers();
+  editingEntryId=null;
+  $("bodyInput").value="";
+  renderJournal();
+  showView("homeView");
+}
+
+function continueDraft(){
+  closeDraftModal();
+  loadDraftIntoEditor();
+}
+
+function handleDraftOnReturn(){
+  const draft=readDraft();
+  if(!draft)return;
+
+  if(draftExpired(draft)){
+    // Preserve the thought as a locked entry rather than letting a draft live forever.
+    if(draft.body?.trim()){
+      state.entries.push({id:crypto.randomUUID(),body:draft.body.trim(),createdAt:draft.startedAt});
+      save();
+    }
+    clearDraft();
+    renderJournal();
+    return;
+  }
+
+  showDraftModal();
+}
+
+function createEntry(){
+  stopTimers();
+  stopDraftAutosave();
+  editingEntryId=null;
+  $("bodyInput").value="";
+  $("entryMeta").textContent="BEGIN";
+  $("entryStatus").textContent="Private · draft";
+  $("lockMessage").textContent="Write freely. Your 24-hour window begins when you write.";
+  $("bodyInput").disabled=false;
+  showView("entryView");
+
+  $("bodyInput").oninput=()=>{
+    const body=$("bodyInput").value;
+    if(body.trim()){
+      if(!readDraft()){
+        localStorage.setItem(DRAFT_KEY,JSON.stringify({
+          body,
+          startedAt:nowISO(),
+          updatedAt:nowISO()
+        }));
+      }else{
+        saveDraft();
+      }
+      $("entryMeta").textContent=formatDate(readDraft().startedAt);
+      $("entryStatus").textContent="Private · draft";
+      $("lockMessage").textContent=`Draft autosaved · ${timeLeftLabel({createdAt:readDraft().startedAt})}`;
+      startDraftAutosave();
+    }else{
+      $("entryStatus").textContent="Private · draft";
+      $("lockMessage").textContent="Write freely. Your 24-hour window begins when you write.";
+    }
+  };
+
+  setTimeout(()=>$("bodyInput").focus(),50);
+}
+function keepDraft(){
+  keepDraftAsEntry();
 }
 
 function openKeepModal(){
@@ -224,8 +343,12 @@ $("backBtn").onclick=()=>{
     return;
   }
 
-  if(body) openKeepModal();
-  else letDraftGo();
+  if(body){
+    saveDraft();
+    showDraftModal();
+  }else{
+    letDraftGo();
+  }
 };
 
 const wander={
@@ -291,6 +414,14 @@ $("keepModal").onclick=e=>{
   if(e.target.id==="keepModal") closeKeepModal();
 };
 
+$("draftContinueBtn").onclick=continueDraft;
+$("draftKeepBtn").onclick=keepDraftAsEntry;
+$("draftLetGoBtn").onclick=letDraftGo;
+$("draftModal").onclick=e=>{
+  if(e.target.id==="draftModal") closeDraftModal();
+};
+
 renderJournal();
 renderFound();
 showView("homeView");
+handleDraftOnReturn();
