@@ -351,42 +351,12 @@ $("backBtn").onclick=()=>{
   }
 };
 
-const wander={
-sound:[["A SOUND","What sound keeps pulling your attention? What does it remind you of?"],["A FEELING","If this feeling had a tempo, a room, and a sound, what would they be?"]],
-image:[["AN IMAGE","What is the first thing you notice? What happened right before this frame?"],["A SCENE","Where are you? Who is there? What is nobody saying?"]],
-words:[["A LINE","Write one sentence you can't stop thinking about."],["A LYRIC","Write four lines without trying to make them good."]],
-question:[["A QUESTION","What are you curious about but afraid might have no clean answer?"],["AN ASSUMPTION","What do you believe because someone else taught you to believe it?"]],
-story:[["A PERSON","Who have you been thinking about lately? What don't you understand about them?"],["A MEMORY","Pick a memory. What detail do you remember that nobody else could have noticed?"]]};
-
-const stuck=[
-["WHERE DID THIS COME FROM?","Pick the idea you keep returning to. Where did you first learn it?"],
-["WHO TAUGHT YOU THAT?","Think of something you believe about success, love, family, or yourself. Who taught you?"],
-["WHAT ARE YOU AVOIDING?","What thought keeps getting pushed to the side because it might change something?"]];
-
-function result(t,b,tr){
-  const x=$("wanderResult");
-  x.classList.remove("hidden");
-  x.innerHTML=`<div class="result-kicker">${esc(tr)}</div><div class="result-title">${esc(t)}</div><div class="result-body">${esc(b)}</div><div class="result-actions"><button class="ghost" id="followBtn">Follow this</button><button class="ghost" id="anotherBtn">Another path</button></div>`;
-  $("followBtn").onclick=()=>{
-    $("ideaInput").value=t;
-    $("ideaBodyInput").value="";
-    $("ideaTrail").textContent=tr;
-    $("ideaForm").dataset.seed=b;
-    showView("ideaView");
-  };
-  $("anotherBtn").onclick=()=>x.classList.add("hidden");
-}
-
-document.querySelectorAll(".path-card").forEach(b=>b.onclick=()=>{
-  const x=wander[b.dataset.path][Math.floor(Math.random()*wander[b.dataset.path].length)];
-  result(x[0],x[1],b.querySelector("b").textContent);
-});
-
-$("lostBtn").onclick=()=>{
-  const x=stuck[Math.floor(Math.random()*stuck.length)];
-  result(x[0],x[1],"LOST? · LET'S START SOMEWHERE");
-};
-
+const WANDER_CONTENT={sound:[{type:"SONG",title:"Start with a song you didn't expect.",body:"Listen without analyzing it. Notice the first thing your body reacts to. The rhythm, the texture, the voice, the space."},{type:"SOUND",title:"Find music inside an ordinary sound.",body:"A machine. A room. A voice. A mistake. What happens when you stop asking what it is and start asking what it could become?"},{type:"PROCESS",title:"The studio is allowed to be uncertain.",body:"Creative work does not always begin with an answer. Sometimes the useful move is changing the question, changing the sound, or leaving the mistake alone."},{type:"PROCESS",title:"Listen to somebody explain how they make.",body:"A producer, musician, engineer, or artist describing the moment something finally clicked can be as inspiring as the finished work."}],words:[{type:"LINE",title:"Follow a sentence.",body:"Find one sentence that makes you stop. Don't explain why. Let the sentence lead you somewhere else."},{type:"STORY",title:"A story can become a sample.",body:"A line from someone's life can become a lyric, a scene, a visual, a rhythm, or an entire project."},{type:"WORDS",title:"Read something outside your lane.",body:"A paragraph from a writer, artist, scientist, poet, or stranger can change the shape of an idea you were already carrying."}],film:[{type:"SCENE",title:"Watch the moment before the moment.",body:"Find a scene where almost nothing happens. Pay attention to what the camera, silence, framing, and timing make you feel."},{type:"PROCESS",title:"Study the choice, not the spectacle.",body:"Look for a filmmaking decision you would not have made. That's often where the useful inspiration lives."},{type:"STORY",title:"Let a scene change the question.",body:"Don't ask what the scene means yet. Ask what it makes you curious about."}],visuals:[{type:"IMAGE",title:"Follow the texture.",body:"Find an image you can almost feel. Follow its light, color, texture, imperfection, or composition."},{type:"COLOR",title:"Let a color start the world.",body:"Pick a color you wouldn't normally use. Imagine the room, song, person, film, or memory that belongs inside it."},{type:"REFERENCE",title:"See something you would never have searched for.",body:"The useful reference is sometimes the one you didn't know existed."}],thoughts:[{type:"QUESTION",title:"Borrow a question, not an answer.",body:"What is something you believe because somebody else taught you to believe it?"},{type:"THOUGHT",title:"Make the obvious strange.",body:"Take something completely normal in your life and imagine you have never seen it before."},{type:"PERSPECTIVE",title:"Enter somebody else's world for a minute.",body:"Find a perspective you don't naturally share. Don't debate it. Wander around inside it."}],unsure:[{type:"SURPRISE",title:"You don't have to know.",body:"Start anywhere. A sound. A face. A color. A sentence. A memory. Something you saw today. Follow whatever catches you."},{type:"SURPRISE",title:"Go toward the thing you can't name.",body:"The fact that you don't know what you're looking for is enough. Let the first spark choose the direction."},{type:"SURPRISE",title:"Open a door you weren't looking for.",body:"The next useful thing may have nothing to do with what you thought you came here for."}]};
+let wanderCategory=null,wanderTrail=[];
+function showWanderCard(item){const box=$("wanderResult");box.classList.remove("hidden");box.innerHTML=`<div class="result-kicker">${esc(item.type)}</div><div class="result-title">${esc(item.title)}</div><div class="result-body">${esc(item.body)}</div><div class="result-actions"><button class="ghost" id="wanderKeepBtn" type="button">KEEP</button><button class="primary" id="wanderNextBtn" type="button">WANDER</button></div>`;$("wanderNextBtn").onclick=wanderNext;$('wanderKeepBtn').onclick=()=>wanderKeep(item)}
+function wanderNext(){const pool=WANDER_CONTENT[wanderCategory]||WANDER_CONTENT.unsure;const item=pool[Math.floor(Math.random()*pool.length)];wanderTrail.push({category:wanderCategory,...item});showWanderCard(item)}
+function wanderKeep(item){const n=document.createElement("p");n.className="small muted";n.textContent="Kept in this wander. Personal collection comes next.";$("wanderResult").appendChild(n)}
+document.querySelectorAll("[data-wander-category]").forEach(b=>b.onclick=()=>{wanderCategory=b.dataset.wanderCategory;wanderTrail=[];wanderNext()});
 $("ideaForm").onsubmit=e=>{
   e.preventDefault();
   const t=$("ideaInput").value.trim(),b=$("ideaBodyInput").value.trim();
