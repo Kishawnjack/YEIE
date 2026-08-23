@@ -40,12 +40,12 @@
         <span class="muted">Private</span>
       </div>
       <form id="entryForm">
-        <label>Title <input id="titleInput" maxlength="120" placeholder="What are you thinking about?"></label>
-        <label>Thoughts
-          <textarea id="bodyInput" rows="14" placeholder="Write freely..."></textarea>
+        <div id="entryMeta" class="entry-meta"></div>
+        <label>Journal
+          <textarea id="bodyInput" rows="16" placeholder="What's on your mind?"></textarea>
         </label>
         <div class="form-actions">
-          <button type="button" id="deleteBtn" class="danger hidden">Delete</button>
+          
           <button type="submit" class="primary">Save Entry</button>
         </div>
       </form>
@@ -53,9 +53,9 @@
 
     <section id="ideasView" class="view">
       <div class="hero compact">
-        <h2>Ideas</h2>
+        <h2>WANDER</h2>
         <p class="muted">Keep the sparks before they disappear.</p>
-        <button id="newIdeaBtn" class="primary">+ New Idea</button>
+        <button id="newIdeaBtn" class="primary">+ Follow a Thought</button>
       </div>
       <div id="ideasList" class="entries empty-state">
         <p>No ideas yet.</p>
@@ -79,9 +79,23 @@
       </form>
     </section>
 
+
+    <section id="wanderView" class="view">
+      <div class="wander-hero"><div class="eyebrow">NO DESTINATION REQUIRED</div><h2>WANDER</h2><p>Don't know what you're looking for? Good.</p></div>
+      <button id="lostBtn" class="lost-card"><span class="lost-mark">?</span><span><strong>I'm stuck.</strong><small>Give me somewhere to start.</small></span><span>→</span></button>
+      <div class="path-grid">
+        <button class="path-card" data-path="sound"><span>◌</span><b>HEAR</b><small>sound · music · samples</small></button>
+        <button class="path-card" data-path="image"><span>◇</span><b>SEE</b><small>film · images · references</small></button>
+        <button class="path-card" data-path="words"><span>—</span><b>WRITE</b><small>lyrics · lines · language</small></button>
+        <button class="path-card" data-path="question"><span>?</span><b>QUESTION</b><small>follow a thought</small></button>
+        <button class="path-card" data-path="story"><span>↗</span><b>FOLLOW</b><small>see where it leads</small></button>
+      </div>
+      <div id="wanderResult" class="wander-result hidden"></div>
+    </section>
+
     <nav class="nav">
       <button data-view="homeView" class="nav-btn active">⌂<span>Journal</span></button>
-      <button data-view="ideasView" class="nav-btn">✦<span>Ideas</span></button>
+      <button data-view="wanderView" class="nav-btn">✦<span>Wander</span></button>
     </nav>
   </main>
 
