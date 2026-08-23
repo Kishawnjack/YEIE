@@ -79,7 +79,11 @@ function autosaveEntry(){
   if(!editingEntryId)return;
   const entry=state.entries.find(e=>e.id===editingEntryId);
   if(!entry || isLocked(entry))return;
-  entry.body=$("bodyInput").value;
+
+  const body=$("bodyInput").value;
+  if(!body.trim()) return;
+
+  entry.body=body;
   entry.updatedAt=nowISO();
   save();
   updateAutosaveStatus();
@@ -125,24 +129,43 @@ function startCountdown(){
 
 function createEntry(){
   stopTimers();
-  const entry={
-    id:crypto.randomUUID(),
-    body:"",
-    createdAt:nowISO()
-  };
-  state.entries.push(entry);
-  save();
-  editingEntryId=entry.id;
+  editingEntryId=null;
   $("bodyInput").value="";
-  $("entryMeta").textContent=formatDate(entry.createdAt);
-  $("entryStatus").textContent="Private · starts now";
+  $("entryMeta").textContent="BEGIN";
+  $("entryStatus").textContent="Private · waiting";
+  $("lockMessage").textContent="Write something when you're ready.";
   $("bodyInput").disabled=false;
   showView("entryView");
-  startAutosave();
-  startCountdown();
+
+  $("bodyInput").oninput=()=>{
+    const body=$("bodyInput").value;
+    if(!body.trim()){
+      $("entryMeta").textContent="BEGIN";
+      $("entryStatus").textContent="Private · waiting";
+      $("lockMessage").textContent="Write something when you're ready.";
+      return;
+    }
+
+    if(!editingEntryId){
+      const entry={
+        id:crypto.randomUUID(),
+        body,
+        createdAt:nowISO()
+      };
+      state.entries.push(entry);
+      editingEntryId=entry.id;
+      save();
+      $("entryMeta").textContent=formatDate(entry.createdAt);
+      $("entryStatus").textContent="Private · started";
+      startAutosave();
+      startCountdown();
+    }else{
+      autosaveEntry();
+    }
+  };
+
   setTimeout(()=>$("bodyInput").focus(),50);
 }
-
 function openEntry(id){
   stopTimers();
   const entry=state.entries.find(e=>e.id===id);
@@ -166,8 +189,18 @@ function openEntry(id){
 $("newEntryBtn").onclick=createEntry;
 
 $("backBtn").onclick=()=>{
-  autosaveEntry();
+  const body=$("bodyInput").value.trim();
+
+  if(editingEntryId){
+    if(body) autosaveEntry();
+    else {
+      state.entries=state.entries.filter(e=>e.id!==editingEntryId);
+      save();
+    }
+  }
+
   stopTimers();
+  editingEntryId=null;
   renderJournal();
   showView("homeView");
 };
