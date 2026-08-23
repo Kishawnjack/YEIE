@@ -21,6 +21,15 @@ function showView(id){
   scrollTo(0,0);
 }
 
+function timeLeftLabel(entry){
+  const remaining=Math.max(0,(new Date(entry.createdAt).getTime()+LOCK_HOURS*3600000)-Date.now());
+  const minutes=Math.ceil(remaining/60000);
+  if(minutes<=1)return "1 minute left";
+  if(minutes<60)return `${minutes} minutes left`;
+  const hours=Math.ceil(minutes/60);
+  return `${hours} hour${hours===1?"":"s"} left`;
+}
+
 function renderJournal(){
   const b=$("recentEntries");
   $("entryCount").textContent=state.entries.length;
@@ -29,18 +38,23 @@ function renderJournal(){
     b.innerHTML="<p>Nothing here yet.</p><p>Write without worrying about what to call it.</p>";
     return;
   }
+
+  const sorted=[...state.entries].sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  const current=sorted.find(e=>!isLocked(e)&&e.body);
+
   b.className="entries";
-  b.innerHTML=[...state.entries].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(e=>`
-    <article class="card">
-      <button type="button" data-open="${e.id}">
-        <div class="card-title">${formatDate(e.createdAt)}</div>
-        <div class="card-date">${isLocked(e)?"Locked":"Open for 24 hours"}</div>
-        <div class="card-preview">${esc(e.body)||"<span class='muted'>Empty entry</span>"}</div>
-      </button>
-    </article>`).join("");
+  b.innerHTML=sorted.map(e=>{
+    const isCurrent=current && current.id===e.id;
+    const status=isCurrent ? `CONTINUE · ${timeLeftLabel(e)}` : (isLocked(e) ? "LOCKED" : timeLeftLabel(e));
+    return `<article class="card"><button type="button" data-open="${e.id}">
+      <div class="card-title">${isCurrent?"CONTINUE":formatDate(e.createdAt)}</div>
+      <div class="card-date">${status}</div>
+      <div class="card-preview">${esc(e.body)||"<span class='muted'>Empty entry</span>"}</div>
+    </button></article>`;
+  }).join("");
+
   b.querySelectorAll("[data-open]").forEach(x=>x.onclick=()=>openEntry(x.dataset.open));
 }
-
 function renderFound(){
   const b=$("ideasList");
   if(!state.ideas.length){
@@ -149,13 +163,6 @@ function openEntry(id){
   }
 }
 
-function resumeOpenEntry(){
-  const candidate=[...state.entries].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).find(e=>!isLocked(e));
-  if(candidate && candidate.body){
-    openEntry(candidate.id);
-  }
-}
-
 $("newEntryBtn").onclick=createEntry;
 
 $("backBtn").onclick=()=>{
@@ -224,4 +231,4 @@ $("privacyModal").onclick=e=>{if(e.target.id==="privacyModal")$("privacyModal").
 
 renderJournal();
 renderFound();
-resumeOpenEntry();
+showView("homeView");
