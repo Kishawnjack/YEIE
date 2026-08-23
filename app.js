@@ -1,6 +1,6 @@
 const KEY="yeie_v01", LOCK_HOURS=24;
 const $=id=>document.getElementById(id);
-let state, editingEntryId=null, autosaveTimer=null, countdownTimer=null;
+let state, editingEntryId=null, autosaveTimer=null, countdownTimer=null, pendingDraftBody="";
 
 try{
   state=JSON.parse(localStorage.getItem(KEY)||'{"entries":[],"ideas":[]}');
@@ -130,41 +130,67 @@ function startCountdown(){
 function createEntry(){
   stopTimers();
   editingEntryId=null;
+  pendingDraftBody="";
   $("bodyInput").value="";
   $("entryMeta").textContent="BEGIN";
-  $("entryStatus").textContent="Private · waiting";
-  $("lockMessage").textContent="Write something when you're ready.";
+  $("entryStatus").textContent="Private · draft";
+  $("lockMessage").textContent="Write freely. Nothing becomes permanent until you keep it.";
   $("bodyInput").disabled=false;
   showView("entryView");
 
   $("bodyInput").oninput=()=>{
-    const body=$("bodyInput").value;
-    if(!body.trim()){
-      $("entryMeta").textContent="BEGIN";
-      $("entryStatus").textContent="Private · waiting";
-      $("lockMessage").textContent="Write something when you're ready.";
-      return;
-    }
-
-    if(!editingEntryId){
-      const entry={
-        id:crypto.randomUUID(),
-        body,
-        createdAt:nowISO()
-      };
-      state.entries.push(entry);
-      editingEntryId=entry.id;
-      save();
-      $("entryMeta").textContent=formatDate(entry.createdAt);
-      $("entryStatus").textContent="Private · started";
-      startAutosave();
-      startCountdown();
+    pendingDraftBody=$("bodyInput").value;
+    if(pendingDraftBody.trim()){
+      $("entryStatus").textContent="Private · draft";
+      $("lockMessage").textContent="Draft autosaved on this device.";
     }else{
-      autosaveEntry();
+      $("entryStatus").textContent="Private · draft";
+      $("lockMessage").textContent="Write freely. Nothing becomes permanent until you keep it.";
     }
   };
 
   setTimeout(()=>$("bodyInput").focus(),50);
+}
+
+function keepDraft(){
+  const body=$("bodyInput").value.trim();
+  if(!body){
+    closeKeepModal();
+    return;
+  }
+  const entry={
+    id:crypto.randomUUID(),
+    body,
+    createdAt:nowISO()
+  };
+  state.entries.push(entry);
+  save();
+  editingEntryId=entry.id;
+  pendingDraftBody="";
+  $("entryMeta").textContent=formatDate(entry.createdAt);
+  $("entryStatus").textContent="Private · started";
+  $("lockMessage").textContent="Saved · locks in 24 hours";
+  startAutosave();
+  startCountdown();
+  closeKeepModal();
+}
+
+function openKeepModal(){
+  $("keepModal").classList.remove("hidden");
+}
+
+function closeKeepModal(){
+  $("keepModal").classList.add("hidden");
+}
+
+function letDraftGo(){
+  pendingDraftBody="";
+  $("bodyInput").value="";
+  closeKeepModal();
+  stopTimers();
+  editingEntryId=null;
+  renderJournal();
+  showView("homeView");
 }
 function openEntry(id){
   stopTimers();
@@ -193,16 +219,19 @@ $("backBtn").onclick=()=>{
 
   if(editingEntryId){
     if(body) autosaveEntry();
-    else {
-      state.entries=state.entries.filter(e=>e.id!==editingEntryId);
-      save();
-    }
+    stopTimers();
+    editingEntryId=null;
+    renderJournal();
+    showView("homeView");
+    return;
   }
 
-  stopTimers();
-  editingEntryId=null;
-  renderJournal();
-  showView("homeView");
+  if(body){
+    pendingDraftBody=body;
+    openKeepModal();
+  }else{
+    letDraftGo();
+  }
 };
 
 const wander={
@@ -261,6 +290,10 @@ document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>{
 $("lockBtn").onclick=()=>$("privacyModal").classList.remove("hidden");
 $("closeModal").onclick=()=>$("privacyModal").classList.add("hidden");
 $("privacyModal").onclick=e=>{if(e.target.id==="privacyModal")$("privacyModal").classList.add("hidden")};
+
+$("keepBtn").onclick=keepDraft;
+$("letGoBtn").onclick=letDraftGo;
+$("keepModal").onclick=e=>{if(e.target.id==="keepModal")closeKeepModal();
 
 renderJournal();
 renderFound();
