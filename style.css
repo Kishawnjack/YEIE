@@ -26,3 +26,10 @@
   .wander-immersion{padding:28px 0 50px}
   .wander-actions{margin-top:30px}
 }
+
+.wander-immersion .result-creator{font-size:12px;letter-spacing:.04em;color:var(--muted);margin-top:-4px;margin-bottom:10px}
+.wander-loading{min-height:260px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:14px;color:var(--muted);font-size:13px}
+.wander-pulse{width:10px;height:10px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 currentColor;animation:wanderPulse 1.5s infinite}
+.wander-action:disabled{opacity:.45;cursor:wait}
+.trail-source{display:inline-block;margin-left:8px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+@keyframes wanderPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.18)}70%{box-shadow:0 0 0 10px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}

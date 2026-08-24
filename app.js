@@ -352,11 +352,13 @@ $("backBtn").onclick=()=>{
 };
 
 /*
- V0.3.2 WANDER FOUNDATION
- CONTENT -> SELECTION -> EXPERIENCE -> SIGNAL
- The UI consumes normalized inspiration records. A future AI discovery layer
- can populate the same contract without changing the WANDER interface.
+ V0.4.0 WANDER + SCOUT
+ The UI consumes one normalized Inspiration record whether it comes from
+ the local fallback catalog or the YEIE Scout Worker.
 */
+const SCOUT_ENDPOINT="https://yeie-scout.peteyrealmusic.workers.dev/scout";
+const SCOUT_TIMEOUT_MS=7000;
+
 const INSPIRATIONS=[
 {id:"sound-001",category:"sound",type:"SONG",title:"Start with a song you didn't expect.",content:"Listen without analyzing it. Notice the first thing your body reacts to: rhythm, texture, voice, or space.",creator:null,sourceLabel:null,sourceUrl:null,tags:["listening","unexpected"],connections:["sound-002","film-001"]},
 {id:"sound-002",category:"sound",type:"SOUND",title:"Find music inside an ordinary sound.",content:"A machine. A room. A voice. A mistake. Stop asking what it is and start asking what it could become.",creator:null,sourceLabel:null,sourceUrl:null,tags:["field-recording","sampling"],connections:["visual-001","sound-003"]},
@@ -379,77 +381,123 @@ const INSPIRATIONS=[
 {id:"unsure-003",category:"unsure",type:"SURPRISE",title:"Open a door you weren't looking for.",content:"The next useful thing may have nothing to do with what you thought you came here for.",creator:null,sourceLabel:null,sourceUrl:null,tags:["surprise","cross-medium"],connections:["visual-003","sound-004"]}
 ];
 
-
-/* V0.3.4 — SCOUT FOUNDATION
-   Today the Scout uses the local catalog.
-   A future AI/web provider can return the same Inspiration record.
-*/
-const SCOUT_CONFIG={allowCrossCategory:true,wildcardRate:.125};
-
-function scoutDiscover(preferredCategory){
-  const pool=INSPIRATIONS.filter(x=>x.category===preferredCategory);
-  return pool[Math.floor(Math.random()*pool.length)] ||
-    INSPIRATIONS[Math.floor(Math.random()*INSPIRATIONS.length)];
+function normalizeScoutItem(item, fallbackCategory="unsure"){
+  if(!item || typeof item!=="object")return null;
+  return {
+    id:String(item.id||`scout-${Date.now()}`),
+    category:String(item.category||fallbackCategory),
+    type:String(item.type||"DISCOVERY").toUpperCase(),
+    title:String(item.title||"Something worth wandering into."),
+    content:String(item.content||item.description||"Follow this wherever it takes you."),
+    creator:item.creator?String(item.creator):null,
+    sourceLabel:item.sourceLabel?String(item.sourceLabel):null,
+    sourceUrl:(typeof item.sourceUrl==="string" && /^https?:\/\//i.test(item.sourceUrl))?item.sourceUrl:null,
+    tags:Array.isArray(item.tags)?item.tags.map(String):[],
+    connections:Array.isArray(item.connections)?item.connections.map(String):[]
+  };
 }
 
-function scoutNext(preferredCategory){
+function localScoutNext(preferredCategory){
   const history=wanderTrail.map(x=>x.item.id);
   const current=wanderCurrent;
-
-  const connected=(current?.connections||[])
-    .map(id=>INSPIRATIONS.find(x=>x.id===id)).filter(Boolean)
-    .filter(x=>x.id!==current?.id);
-
+  const connected=(current?.connections||[]).map(id=>INSPIRATIONS.find(x=>x.id===id)).filter(Boolean).filter(x=>x.id!==current?.id);
   const fresh=INSPIRATIONS.filter(x=>!history.includes(x.id)&&x.id!==current?.id);
   const same=fresh.filter(x=>x.category===preferredCategory);
   const wildcard=fresh.filter(x=>x.category!==preferredCategory);
 
-  if(connected.length && Math.random()<.45)
-    return connected[Math.floor(Math.random()*connected.length)];
-  if(same.length && Math.random()<.70)
-    return same[Math.floor(Math.random()*same.length)];
-  if(SCOUT_CONFIG.allowCrossCategory && wildcard.length && Math.random()<SCOUT_CONFIG.wildcardRate)
-    return wildcard[Math.floor(Math.random()*wildcard.length)];
-  return scoutDiscover(preferredCategory);
+  if(connected.length && Math.random()<.45)return connected[Math.floor(Math.random()*connected.length)];
+  if(same.length && Math.random()<.70)return same[Math.floor(Math.random()*same.length)];
+  if(wildcard.length && Math.random()<.125)return wildcard[Math.floor(Math.random()*wildcard.length)];
+  return same[0]||fresh[0]||INSPIRATIONS[Math.floor(Math.random()*INSPIRATIONS.length)];
 }
 
-let wanderCategory=null,wanderTrail=[],wanderCurrent=null;
+async function fetchScout(preferredCategory){
+  const category=preferredCategory==="unsure"?"not-sure":preferredCategory;
+  const seen=wanderTrail.map(x=>x.item.id).filter(Boolean).slice(-30);
+  const params=new URLSearchParams({category});
+  seen.forEach(id=>params.append("seen",id));
 
-function pickWanderItem(category){
-  return scoutNext(category);
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),SCOUT_TIMEOUT_MS);
+  try{
+    const response=await fetch(`${SCOUT_ENDPOINT}?${params.toString()}`,{
+      method:"GET",
+      headers:{"Accept":"application/json"},
+      signal:controller.signal,
+      cache:"no-store"
+    });
+    if(!response.ok)throw new Error(`Scout returned ${response.status}`);
+    const payload=await response.json();
+    const item=normalizeScoutItem(payload?.discovery,preferredCategory);
+    if(!item)throw new Error("Scout returned no discovery");
+    return item;
+  }finally{
+    clearTimeout(timer);
+  }
 }
-function maybeWildcard(category){ return null; }
+
+async function scoutNext(preferredCategory){
+  try{
+    return await fetchScout(preferredCategory);
+  }catch(error){
+    console.warn("YEIE Scout unavailable; using local fallback.",error);
+    return localScoutNext(preferredCategory);
+  }
+}
+
+let wanderCategory=null,wanderTrail=[],wanderCurrent=null,wanderLoading=false;
 
 function renderWanderItem(item){
+  const creator=item.creator?`<div class="result-creator">${esc(item.creator)}</div>`:"";
   $("wanderResult").innerHTML=
     `<div class="result-kicker">${esc(item.type)}</div>
      <div class="result-title">${esc(item.title)}</div>
+     ${creator}
      <div class="result-body">${esc(item.content)}</div>`;
 }
 
-function enterWander(category){
-  wanderCategory=category; wanderTrail=[];
-  wanderCurrent=pickWanderItem(category);
+function setWanderLoading(isLoading){
+  wanderLoading=isLoading;
+  $("wanderKeepBtn").disabled=isLoading;
+  $("wanderNextBtn").disabled=isLoading;
+  if(isLoading){
+    $("wanderResult").innerHTML=`<div class="wander-loading"><span class="wander-pulse"></span><div>Finding something to wander into…</div></div>`;
+  }
+}
+
+async function enterWander(category){
+  if(wanderLoading)return;
+  wanderCategory=category; wanderTrail=[]; setWanderLoading(true);
   $("wanderLanding").classList.add("hidden");
   $("wanderImmersion").classList.remove("hidden");
   $("wanderCategory").textContent=category==="unsure"?"I'M NOT SURE":category.toUpperCase();
-  renderWanderItem(wanderCurrent);
-  wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"encounter",at:nowISO()});
+  try{
+    wanderCurrent=await scoutNext(category);
+    renderWanderItem(wanderCurrent);
+    wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"encounter",at:nowISO()});
+  }finally{
+    setWanderLoading(false);
+  }
 }
 
-function advanceWander(){
-  if(!wanderCategory)return;
-  wanderCurrent=pickWanderItem(wanderCategory);
-  if(wanderCurrent.category!==wanderCategory){
-    wanderCategory=wanderCurrent.category;
-    $("wanderCategory").textContent=wanderCategory.toUpperCase();
+async function advanceWander(){
+  if(!wanderCategory||wanderLoading)return;
+  setWanderLoading(true);
+  try{
+    wanderCurrent=await scoutNext(wanderCategory);
+    if(wanderCurrent.category!==wanderCategory && wanderCategory!=="unsure"){
+      // The doorway remains the user's chosen direction; the content may cross mediums.
+      $("wanderCategory").textContent=wanderCategory.toUpperCase();
+    }
+    wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"wander",at:nowISO()});
+    renderWanderItem(wanderCurrent);
+  }finally{
+    setWanderLoading(false);
   }
-  wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"wander",at:nowISO()});
-  renderWanderItem(wanderCurrent);
 }
 
 function keepWanderItem(){
-  if(!wanderCurrent)return;
+  if(!wanderCurrent||wanderLoading)return;
   if(!Array.isArray(state.ideas))state.ideas=[];
   if(!state.ideas.some(x=>x.id===wanderCurrent.id)){
     state.ideas.push({
@@ -459,25 +507,29 @@ function keepWanderItem(){
       sourceUrl:wanderCurrent.sourceUrl,createdAt:nowISO(),origin:"wander"
     });
     save();
-    if(typeof renderFound==="function")renderFound();
+    renderFound();
   }
   wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"keep",at:nowISO()});
   advanceWander();
 }
 
 function leaveWanderWorld(){
-  wanderCategory=null; wanderCurrent=null;
+  if(wanderLoading)return;
+  wanderCategory=null; wanderCurrent=null; wanderTrail=[];
   $("wanderImmersion").classList.add("hidden");
   $("wanderLanding").classList.remove("hidden");
 }
 
 function showWanderTrail(){
   const box=$("wanderResult");
-  if(!wanderTrail.length)return;
+  if(!wanderTrail.length||wanderLoading)return;
   const original=box.innerHTML;
-  const rows=wanderTrail.map((s,i)=>
-    `<div class="trail-row"><span>${i+1}</span><div><strong>${esc(s.item.title)}</strong><small>${esc(s.action)} · ${esc(s.category)}</small></div></div>`
-  ).join("");
+  const rows=wanderTrail.map((s,i)=>{
+    const source=s.item.sourceUrl
+      ? `<a class="trail-source" href="${esc(s.item.sourceUrl)}" target="_blank" rel="noopener noreferrer">SOURCE ↗</a>`
+      : "";
+    return `<div class="trail-row"><span>${i+1}</span><div><strong>${esc(s.item.title)}</strong><small>${esc(s.action)} · ${esc(s.category)} ${source}</small></div></div>`;
+  }).join("");
   box.innerHTML=`<div class="result-kicker">YOUR TRAIL</div>
     <div class="result-title">Where you went.</div>
     <div class="trail-list">${rows}</div>
