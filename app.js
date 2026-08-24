@@ -219,17 +219,6 @@ function keepDraftAsEntry(){
   startCountdown();
 }
 
-function letDraftGo(){
-  clearDraft();
-  pendingDraftBody="";
-  closeDraftModal();
-  stopDraftAutosave();
-  stopTimers();
-  editingEntryId=null;
-  $("bodyInput").value="";
-  renderJournal();
-  showView("homeView");
-}
 
 function continueDraft(){
   closeDraftModal();
@@ -282,6 +271,9 @@ function createEntry(){
       $("lockMessage").textContent=`Draft autosaved · ${timeLeftLabel({createdAt:readDraft().startedAt})}`;
       startDraftAutosave();
     }else{
+      // An intentionally empty editor is not a draft.
+      clearDraft();
+      stopDraftAutosave();
       $("entryStatus").textContent="Private · draft";
       $("lockMessage").textContent="Write freely. Your 24-hour window begins when you write.";
     }
@@ -302,10 +294,18 @@ function closeKeepModal(){
 }
 
 function letDraftGo(){
-  $("bodyInput").value="";
+  // "Let go" means the draft is intentionally abandoned.
+  // It must not reappear on the next visit to YEIE.
+  clearDraft();
+  pendingDraftBody="";
+  closeDraftModal();
   closeKeepModal();
+  stopDraftAutosave();
   stopTimers();
   editingEntryId=null;
+  $("bodyInput").value="";
+  $("entryStatus").textContent="Private · draft";
+  $("lockMessage").textContent="Write freely. Your 24-hour window begins when you write.";
   renderJournal();
   showView("homeView");
 }
