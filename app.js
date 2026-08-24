@@ -379,28 +379,46 @@ const INSPIRATIONS=[
 {id:"unsure-003",category:"unsure",type:"SURPRISE",title:"Open a door you weren't looking for.",content:"The next useful thing may have nothing to do with what you thought you came here for.",creator:null,sourceLabel:null,sourceUrl:null,tags:["surprise","cross-medium"],connections:["visual-003","sound-004"]}
 ];
 
+
+/* V0.3.4 — SCOUT FOUNDATION
+   Today the Scout uses the local catalog.
+   A future AI/web provider can return the same Inspiration record.
+*/
+const SCOUT_CONFIG={allowCrossCategory:true,wildcardRate:.125};
+
+function scoutDiscover(preferredCategory){
+  const pool=INSPIRATIONS.filter(x=>x.category===preferredCategory);
+  return pool[Math.floor(Math.random()*pool.length)] ||
+    INSPIRATIONS[Math.floor(Math.random()*INSPIRATIONS.length)];
+}
+
+function scoutNext(preferredCategory){
+  const history=wanderTrail.map(x=>x.item.id);
+  const current=wanderCurrent;
+
+  const connected=(current?.connections||[])
+    .map(id=>INSPIRATIONS.find(x=>x.id===id)).filter(Boolean)
+    .filter(x=>x.id!==current?.id);
+
+  const fresh=INSPIRATIONS.filter(x=>!history.includes(x.id)&&x.id!==current?.id);
+  const same=fresh.filter(x=>x.category===preferredCategory);
+  const wildcard=fresh.filter(x=>x.category!==preferredCategory);
+
+  if(connected.length && Math.random()<.45)
+    return connected[Math.floor(Math.random()*connected.length)];
+  if(same.length && Math.random()<.70)
+    return same[Math.floor(Math.random()*same.length)];
+  if(SCOUT_CONFIG.allowCrossCategory && wildcard.length && Math.random()<SCOUT_CONFIG.wildcardRate)
+    return wildcard[Math.floor(Math.random()*wildcard.length)];
+  return scoutDiscover(preferredCategory);
+}
+
 let wanderCategory=null,wanderTrail=[],wanderCurrent=null;
 
 function pickWanderItem(category){
-  const pool=INSPIRATIONS.filter(x=>x.category===category);
-  if(!pool.length)return INSPIRATIONS[Math.floor(Math.random()*INSPIRATIONS.length)];
-  const history=wanderTrail.map(x=>x.item.id);
-  const connected=(wanderCurrent?.connections||[])
-    .map(id=>INSPIRATIONS.find(x=>x.id===id))
-    .filter(x=>x&&x.id!==wanderCurrent?.id);
-  const fresh=pool.filter(x=>!history.includes(x.id)&&x.id!==wanderCurrent?.id);
-  const familiar=pool.filter(x=>x.id!==wanderCurrent?.id);
-  const roll=Math.random();
-  if(connected.length&&roll<.45)return connected[Math.floor(Math.random()*connected.length)];
-  if(fresh.length&&roll<.9)return fresh[Math.floor(Math.random()*fresh.length)];
-  return familiar[Math.floor(Math.random()*familiar.length)]||pool[0];
+  return scoutNext(category);
 }
-
-function maybeWildcard(category){
-  if(Math.random()>=.125)return null;
-  const candidates=INSPIRATIONS.filter(x=>x.category!==category);
-  return candidates[Math.floor(Math.random()*candidates.length)]||null;
-}
+function maybeWildcard(category){ return null; }
 
 function renderWanderItem(item){
   $("wanderResult").innerHTML=
@@ -421,8 +439,7 @@ function enterWander(category){
 
 function advanceWander(){
   if(!wanderCategory)return;
-  const wildcard=maybeWildcard(wanderCategory);
-  wanderCurrent=wildcard||pickWanderItem(wanderCategory);
+  wanderCurrent=pickWanderItem(wanderCategory);
   if(wanderCurrent.category!==wanderCategory){
     wanderCategory=wanderCurrent.category;
     $("wanderCategory").textContent=wanderCategory.toUpperCase();
