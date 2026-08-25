@@ -12,7 +12,7 @@
 <div class="wander-world" id="wanderWorld">
   <div class="wander-world-top">
     <button id="wanderBackBtn" class="back" type="button">← WANDER</button>
-    <div id="wanderWorldLabel" class="eyebrow">WANDER</div>
+    <div id="wanderWorldLabel" class="eyebrow wander-breathe-label" aria-hidden="true">WANDER</div>
     <button id="wanderTrailBtn" class="icon-btn" type="button" aria-label="View trail">◎</button>
   </div>
   <div id="wanderLanding" class="wander-landing">
@@ -29,9 +29,9 @@
     </div>
   </div>
   <div id="wanderImmersion" class="wander-immersion hidden" aria-live="polite">
-    <div id="wanderCategory" class="eyebrow"></div>
+    <div id="wanderCategory" class="eyebrow hidden" aria-hidden="true"></div>
     <div id="wanderResult"></div>
-    <div class="wander-actions">
+    <div id="wanderActions" class="wander-actions">
       <button id="wanderKeepBtn" class="wander-action wander-keep" type="button">KEEP</button>
       <button id="wanderNextBtn" class="wander-action wander-go" type="button">WANDER →</button>
     </div>
@@ -61,5 +61,5 @@
 <button id="keepBtn" class="primary" type="button">KEEP IT</button>
 </div>
 </div></div>
-<div id="privacyModal" class="modal hidden"><div class="modal-card"><button id="closeModal" class="close">×</button><h2>🔒 Private by design</h2><p>YEIE V0.4.1 keeps journal entries and opens WANDER in this browser on this device. There is no account, sharing, or cloud sync yet.</p><p class="muted small">Unfinished journal drafts are autosaved while you write. Clearing browser/site data can erase local entries and drafts.</p></div></div>
+<div id="privacyModal" class="modal hidden"><div class="modal-card"><button id="closeModal" class="close">×</button><h2>🔒 Private by design</h2><p>YEIE V0.4.2 keeps journal entries and opens WANDER in this browser on this device. There is no account, sharing, or cloud sync yet.</p><p class="muted small">Unfinished journal drafts are autosaved while you write. Clearing browser/site data can erase local entries and drafts.</p></div></div>
 <script src="app.js"></script></body></html>

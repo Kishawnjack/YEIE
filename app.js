@@ -491,19 +491,43 @@ async function scoutNext(preferredCategory){
 let wanderCategory=null,wanderTrail=[],wanderCurrent=null,wanderLoading=false;
 
 function renderWanderItem(item){
-  const creator=item.creator?`<div class="result-creator">${esc(item.creator)}</div>`:"";
-  $("wanderCategory").textContent=item.category==="unsure"?"I'M NOT SURE":item.category.toUpperCase();
-  $("wanderResult").innerHTML=
-    `<div class="result-kicker">${esc(item.type)}</div>
-     <div class="result-title">${esc(item.title)}</div>
-     ${creator}
-     <div class="result-body">${esc(item.content)}</div>`;
+  const result=$("wanderResult");
+  result.classList.remove("wander-reveal","wander-exit");
+  result.innerHTML=`<div class="wander-encounter">
+    <div class="wander-encounter-title">${esc(item.title||"Something worth wandering into.")}</div>
+    <div class="wander-encounter-body">${esc(item.content||"")}</div>
+  </div>`;
+  // Keep category/source metadata out of the encounter. YEIE knows the path;
+  // the person should experience the thing itself.
+  result.offsetWidth;
+  result.classList.add("wander-reveal");
+}
+
+function wanderDwellMs(item){
+  const type=String(item?.type||"").toLowerCase();
+  if(type.includes("painting")||type.includes("image")||type.includes("visual"))return 2100;
+  if(type.includes("poem")||type.includes("spoken")||type.includes("line")||type.includes("quote"))return 1700;
+  if(type.includes("film")||type.includes("scene")||type.includes("video"))return 1300;
+  if(type.includes("song")||type.includes("sound")||type.includes("process"))return 1100;
+  return 1400;
+}
+
+async function transitionToNext(item){
+  const result=$("wanderResult");
+  const actions=$("wanderActions");
+  result.classList.remove("wander-reveal");
+  result.classList.add("wander-exit");
+  actions.classList.add("wander-actions-hidden");
+  await new Promise(r=>setTimeout(r,900));
+  await new Promise(r=>setTimeout(r,wanderDwellMs(item)));
+  actions.classList.remove("wander-actions-hidden");
 }
 
 function setWanderLoading(isLoading){
   wanderLoading=isLoading;
   $("wanderKeepBtn").disabled=isLoading;
   $("wanderNextBtn").disabled=isLoading;
+  $("wanderActions").classList.toggle("wander-actions-hidden",isLoading);
   if(isLoading){
     $("wanderResult").innerHTML=`<div class="wander-loading"><span class="wander-pulse"></span><div>Finding something to wander into…</div></div>`;
   }
@@ -520,6 +544,7 @@ async function enterWander(category){
     renderWanderItem(wanderCurrent);
     wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"encounter",at:nowISO()});
     rememberWanderItem(wanderCurrent);
+    await new Promise(r=>setTimeout(r,wanderDwellMs(wanderCurrent)));
   }finally{
     setWanderLoading(false);
   }
@@ -529,6 +554,7 @@ async function advanceWander(){
   if(!wanderCategory||wanderLoading)return;
   setWanderLoading(true);
   try{
+    const previousItem=wanderCurrent;
     wanderCurrent=await scoutNext(wanderCategory);
     if(wanderCurrent.category!==wanderCategory && wanderCategory!=="unsure"){
       // The doorway remains the user's chosen direction; the content may cross mediums.
@@ -536,6 +562,7 @@ async function advanceWander(){
     }
     wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"wander",at:nowISO()});
     rememberWanderItem(wanderCurrent);
+    if(previousItem) await transitionToNext(previousItem);
     renderWanderItem(wanderCurrent);
   }finally{
     setWanderLoading(false);

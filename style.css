@@ -33,3 +33,33 @@
 .wander-action:disabled{opacity:.45;cursor:wait}
 .trail-source{display:inline-block;margin-left:8px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 @keyframes wanderPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.18)}70%{box-shadow:0 0 0 10px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+
+
+/* V0.4.2 — WANDER experience: threshold, dwell, immersion */
+#wanderView{min-height:100vh}
+#wanderView .wander-world{min-height:100vh}
+.wander-world-top{padding-top:4px}
+.wander-breathe-label{opacity:.08;pointer-events:none;transition:opacity 900ms ease}
+.wander-immersion{max-width:none;width:100%;min-height:calc(100vh - 70px);padding:6vh clamp(18px,6vw,90px) 7vh;justify-content:center;align-items:center;position:relative}
+#wanderResult{width:100%;max-width:1100px;margin:0;background:transparent;border:0;padding:0;display:flex;justify-content:center;align-items:center;min-height:55vh}
+.wander-encounter{width:100%;max-width:980px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:22px}
+.wander-encounter-title{font-size:clamp(38px,8vw,92px);line-height:.98;letter-spacing:-.055em;font-weight:720;max-width:1000px;text-wrap:balance}
+.wander-encounter-body{font-size:clamp(18px,2.4vw,29px);line-height:1.5;color:#d7d7d7;max-width:760px;text-wrap:balance}
+.wander-actions{transition:opacity 650ms ease,transform 650ms ease;justify-content:center;width:100%;margin-top:24px}
+.wander-actions-hidden{opacity:0;pointer-events:none;transform:translateY(8px)}
+.wander-action{min-width:140px;background:transparent;transition:transform 180ms ease,background 180ms ease,border-color 180ms ease}
+.wander-keep:hover,.wander-go:hover{transform:translateY(-2px)}
+.wander-go{background:var(--text);color:#000;border-color:var(--text)}
+.wander-keep{border-color:#444}
+.wander-reveal{animation:wanderReveal 1200ms cubic-bezier(.22,.8,.24,1) both}
+.wander-exit{animation:wanderExit 750ms ease both}
+@keyframes wanderReveal{0%{opacity:0;transform:scale(.985) translateY(18px);filter:blur(10px)}55%{opacity:.72;filter:blur(2px)}100%{opacity:1;transform:none;filter:blur(0)}}
+@keyframes wanderExit{0%{opacity:1;transform:none;filter:blur(0)}100%{opacity:0;transform:scale(.985) translateY(-10px);filter:blur(10px)}}
+@media(max-width:600px){
+  #wanderView .wander-world-top{padding-top:0}
+  .wander-immersion{padding:4vh 18px 7vh}
+  #wanderResult{min-height:58vh}
+  .wander-encounter{gap:18px}
+  .wander-actions{margin-top:12px}
+  .wander-action{min-width:0;flex:1}
+}
