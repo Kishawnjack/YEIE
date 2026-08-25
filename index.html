@@ -4,21 +4,15 @@
 <title>YEIE — Private Journal</title></head><body><main class="app">
 <header class="topbar"><div><div class="eyebrow">YOUR EVERYONE ISN'T EVERYONE</div><h1>YEIE</h1></div><button id="lockBtn" class="icon-btn">🔒</button></header>
 <section id="homeView" class="view active home-gateway">
-  <div class="home-world" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-  <div class="home-hero">
-    <div class="eyebrow home-eyebrow">YOUR EVERYONE ISN'T EVERYONE</div>
-    <h2>WELCOME<br><em>TO YEIE.</em></h2>
-    <p class="home-line">A place to make something, lose yourself, and find what you didn't know you were looking for.</p>
+  <div class="home-world" aria-hidden="true"><span></span><span></span><span></span><span></span><div class="home-chroma"></div></div>
+  <div class="home-logo-stage" aria-label="YEIE">
+    <div class="home-logo-chroma">YEIE</div>
   </div>
+  <div class="home-scroll-space" aria-hidden="true"></div>
   <div class="home-choices" aria-label="Choose what to do">
-    <button id="homeJournalBtn" class="home-choice" type="button">
-      <span class="home-choice-mark">✦</span><span><b>JOURNAL</b><small>document what's happening inside.</small></span><i>↗</i>
-    </button>
-    <button id="homeWanderBtn" class="home-choice home-choice-wander" type="button">
-      <span class="home-choice-mark">◌</span><span><b>WANDER</b><small>get lost in something unexpected.</small></span><i>→</i>
-    </button>
+    <button id="homeJournalBtn" class="home-choice" type="button"><span>JOURNAL</span><i>↗</i></button>
+    <button id="homeWanderBtn" class="home-choice home-choice-wander" type="button"><span>WANDER</span><i>→</i></button>
   </div>
-  <div class="home-pulse">YOU ARE IN THE RIGHT PLACE.</div>
 </section>
 <section id="journalView" class="view journal-screen">
   <div class="journal-head"><div><div class="eyebrow">YOUR JOURNAL</div><h2>What are you carrying?</h2></div><button id="newEntryBtn" class="primary">BEGIN</button></div>
@@ -37,13 +31,8 @@
     <div class="wander-orbit wander-orbit-b"></div>
     <div class="wander-grain"></div>
   </div>
-  <div class="wander-world-top">
-    
-    <div id="wanderWorldLabel" class="eyebrow wander-breathe-label" aria-hidden="true">WANDER</div>
-    <button id="wanderTrailBtn" class="icon-btn" type="button" aria-label="View trail">◎</button>
-  </div>
+  <div class="wander-world-top" aria-hidden="true"></div>
   <div id="wanderLanding" class="wander-landing">
-    <div class="eyebrow">WANDER</div>
     <h2>GET LOST IN</h2>
         <div class="path-grid">
       <button class="path-card" data-wander-category="sound" type="button"><span>◌</span><b>SOUND</b><small>songs · samples · voices · process</small></button>
@@ -87,5 +76,6 @@
 <button id="keepBtn" class="primary" type="button">KEEP IT</button>
 </div>
 </div></div>
+<div id="pagePortal" class="page-portal" aria-hidden="true"><div class="page-portal-core"></div></div>
 <div id="privacyModal" class="modal hidden"><div class="modal-card"><button id="closeModal" class="close">×</button><h2>🔒 Private by design</h2><p>YEIE V0.4.2 keeps journal entries and opens WANDER in this browser on this device. There is no account, sharing, or cloud sync yet.</p><p class="muted small">Unfinished journal drafts are autosaved while you write. Clearing browser/site data can erase local entries and drafts.</p></div></div>
 <script src="app.js"></script></body></html>

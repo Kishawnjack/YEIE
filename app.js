@@ -14,11 +14,29 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const formatDate=iso=>new Date(iso).toLocaleString([],{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"});
 const isLocked=e=>Date.now()-new Date(e.createdAt).getTime()>=LOCK_HOURS*3600000;
 
-function showView(id){
-  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  $(id).classList.add("active");
-  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===id));
-  scrollTo(0,0);
+let currentView="homeView";
+let pageTravelTimer=null;
+function showView(id,travel=true){
+  const from=currentView;
+  const needsPortal=travel && from!==id && (from==="homeView" || id==="homeView");
+  const commit=()=>{
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    $(id).classList.add("active");
+    document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===id));
+    currentView=id;
+    scrollTo(0,0);
+  };
+  if(!needsPortal){commit();return;}
+  const portal=$("pagePortal");
+  if(pageTravelTimer)clearTimeout(pageTravelTimer);
+  document.body.classList.add("page-traveling");
+  portal.classList.remove("active");
+  void portal.offsetWidth;
+  portal.classList.add("active");
+  pageTravelTimer=setTimeout(()=>{
+    commit();
+    setTimeout(()=>{portal.classList.remove("active");document.body.classList.remove("page-traveling");},180);
+  },500);
 }
 
 function timeLeftLabel(entry){
@@ -678,7 +696,18 @@ wanderWorld.addEventListener("click",e=>{
 });
 wanderWorld.addEventListener("touchstart",()=>revealWanderControls(),{passive:true});
 
-document.querySelectorAll("[data-wander-category]").forEach(btn=>btn.onclick=()=>enterWander(btn.dataset.wanderCategory));
+document.querySelectorAll("[data-wander-category]").forEach(btn=>{
+  btn.onclick=()=>enterWander(btn.dataset.wanderCategory);
+  btn.addEventListener("pointerenter",()=>{
+    document.querySelectorAll(".path-card").forEach(x=>x.classList.remove("is-hovered"));
+    btn.classList.add("is-hovered");
+    btn.closest(".path-grid")?.classList.add("has-hover");
+  });
+  btn.addEventListener("pointerleave",()=>{
+    btn.classList.remove("is-hovered");
+    btn.closest(".path-grid")?.classList.remove("has-hover");
+  });
+});
 $("wanderNextBtn").onclick=advanceWander;
 $("wanderKeepBtn").onclick=keepWanderItem;
 // WANDER has no redundant back button inside the world.
@@ -695,8 +724,8 @@ $("ideaForm").onsubmit=e=>{
 
 $("ideaBackBtn").onclick=()=>showView("wanderView");
 
-$("homeJournalBtn").onclick=()=>{renderJournal();showView("journalView");};
-$("homeWanderBtn").onclick=()=>{showView("wanderView");};
+$("homeJournalBtn").onclick=()=>{renderJournal();showView("journalView",true);};
+$("homeWanderBtn").onclick=()=>{showView("wanderView",true);};
 
 document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>{
   if(b.dataset.view==="journalView")renderJournal();
@@ -721,7 +750,21 @@ $("draftModal").onclick=e=>{
   if(e.target.id==="draftModal") closeDraftModal();
 };
 
+const homeView=$("homeView");
+let homeRaf=null;
+window.addEventListener("scroll",()=>{
+  if(!homeView.classList.contains("active"))return;
+  if(homeRaf)cancelAnimationFrame(homeRaf);
+  homeRaf=requestAnimationFrame(()=>{
+    const y=Math.min(window.scrollY,window.innerHeight*.65);
+    const logo=homeView.querySelector(".home-logo-chroma");
+    const choices=homeView.querySelector(".home-choices");
+    if(logo)logo.style.transform=`translateY(calc(-5vh + ${y*.045}px)) scale(${1+y*.00018})`;
+    if(choices)choices.style.transform=`translateY(${y*.055}px)`;
+  });
+},{passive:true});
+
 renderJournal();
 renderFound();
-showView("homeView");
+showView("homeView",false);
 handleDraftOnReturn();
