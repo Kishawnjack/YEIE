@@ -489,6 +489,26 @@ async function scoutNext(preferredCategory){
 }
 
 let wanderCategory=null,wanderTrail=[],wanderCurrent=null,wanderLoading=false;
+let wanderControlsTimer=null;
+const WANDER_CONTROLS_DELAY=7000;
+
+function resetWanderControls(){
+  if(wanderControlsTimer) clearTimeout(wanderControlsTimer);
+  const actions=$("wanderActions");
+  actions.classList.remove("wander-controls-ready","wander-controls-reveal");
+  actions.classList.add("wander-actions-hidden");
+  wanderControlsTimer=setTimeout(()=>{
+    if(!wanderLoading){
+      actions.classList.remove("wander-actions-hidden");
+      actions.classList.add("wander-controls-ready");
+    }
+  },WANDER_CONTROLS_DELAY);
+}
+
+function revealWanderControls(){
+  if(wanderLoading)return;
+  $("wanderActions").classList.add("wander-controls-reveal");
+}
 
 function renderWanderItem(item){
   const result=$("wanderResult");
@@ -518,9 +538,11 @@ async function transitionToNext(item){
   result.classList.remove("wander-reveal");
   result.classList.add("wander-exit");
   actions.classList.add("wander-actions-hidden");
+  actions.classList.remove("wander-controls-ready","wander-controls-reveal");
+  if(wanderControlsTimer) clearTimeout(wanderControlsTimer);
   await new Promise(r=>setTimeout(r,900));
   await new Promise(r=>setTimeout(r,wanderDwellMs(item)));
-  actions.classList.remove("wander-actions-hidden");
+  resetWanderControls();
 }
 
 function setWanderLoading(isLoading){
@@ -542,6 +564,7 @@ async function enterWander(category){
   try{
     wanderCurrent=await scoutNext(category);
     renderWanderItem(wanderCurrent);
+    resetWanderControls();
     wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"encounter",at:nowISO()});
     rememberWanderItem(wanderCurrent);
     await new Promise(r=>setTimeout(r,wanderDwellMs(wanderCurrent)));
@@ -564,6 +587,7 @@ async function advanceWander(){
     rememberWanderItem(wanderCurrent);
     if(previousItem) await transitionToNext(previousItem);
     renderWanderItem(wanderCurrent);
+    if(!previousItem) resetWanderControls();
   }finally{
     setWanderLoading(false);
   }
@@ -588,6 +612,7 @@ function keepWanderItem(){
 
 function leaveWanderWorld(){
   if(wanderLoading)return;
+  if(wanderControlsTimer) clearTimeout(wanderControlsTimer);
   wanderCategory=null; wanderCurrent=null; wanderTrail=[];
   $("wanderImmersion").classList.add("hidden");
   $("wanderLanding").classList.remove("hidden");
@@ -610,8 +635,17 @@ function showWanderTrail(){
   $("closeTrailBtn").onclick=()=>{box.innerHTML=original;};
 }
 
+const wanderWorld=$("wanderWorld");
+wanderWorld.addEventListener("pointermove",e=>{
+  if(e.pointerType==="mouse" && e.clientY>window.innerHeight-190) revealWanderControls();
+});
+wanderWorld.addEventListener("click",e=>{
+  if(e.target.closest(".wander-action,.back,.icon-btn,.path-card"))return;
+  revealWanderControls();
+});
+wanderWorld.addEventListener("touchstart",()=>revealWanderControls(),{passive:true});
+
 document.querySelectorAll("[data-wander-category]").forEach(btn=>btn.onclick=()=>enterWander(btn.dataset.wanderCategory));
-setupWanderActionDiscovery();
 $("wanderNextBtn").onclick=advanceWander;
 $("wanderKeepBtn").onclick=keepWanderItem;
 $("wanderBackBtn").onclick=leaveWanderWorld;
