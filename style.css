@@ -95,3 +95,60 @@
   .wander-actions{margin-top:12px}
   .wander-action{min-width:0;flex:1}
 }
+
+
+/* V0.4.4 — DREAM THRESHOLD: WANDER becomes a world before it becomes a feed */
+#wanderView{background:#08090d;overflow:hidden;isolation:isolate}
+#wanderView .wander-world{position:relative;overflow:hidden;background:
+  radial-gradient(circle at 50% 42%,rgba(255,255,255,.045),transparent 32%),
+  radial-gradient(circle at 15% 85%,rgba(105,125,255,.075),transparent 35%),
+  radial-gradient(circle at 88% 18%,rgba(190,130,255,.055),transparent 34%),
+  #08090d;transition:background 1800ms ease}
+.wander-atmosphere{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.wander-mist{position:absolute;width:70vw;height:38vw;max-width:900px;max-height:520px;border-radius:50%;filter:blur(70px);opacity:.22;mix-blend-mode:screen}
+.wander-mist-a{left:-18vw;top:16vh;background:radial-gradient(ellipse,rgba(220,230,255,.35),transparent 68%);animation:wanderMistA 18s ease-in-out infinite alternate}
+.wander-mist-b{right:-20vw;bottom:2vh;background:radial-gradient(ellipse,rgba(145,120,255,.28),transparent 68%);animation:wanderMistB 22s ease-in-out infinite alternate}
+.wander-orbit{position:absolute;border:1px solid rgba(255,255,255,.045);border-radius:50%;left:50%;top:48%;transform:translate(-50%,-50%) rotate(-14deg);opacity:.5}
+.wander-orbit-a{width:110vw;height:42vw;animation:wanderOrbitA 30s linear infinite}
+.wander-orbit-b{width:80vw;height:30vw;animation:wanderOrbitB 42s linear infinite reverse}
+.wander-grain{position:absolute;inset:-50%;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");animation:wanderGrain 1.4s steps(2) infinite}
+.wander-world-top,.wander-landing,.wander-immersion{position:relative;z-index:2}
+.wander-world-top{transition:opacity 800ms ease}
+.wander-landing{min-height:calc(100vh - 70px);display:flex;flex-direction:column;justify-content:center;padding:8vh 0 10vh;max-width:900px}
+.wander-landing .eyebrow:first-child{opacity:.4;letter-spacing:.28em;animation:wanderLetterBreath 5s ease-in-out infinite}
+.wander-landing h2{font-size:clamp(54px,11vw,118px);font-weight:500;line-height:.88;letter-spacing:-.065em;margin:0 0 14px;max-width:900px;animation:wanderDreamTitle 2.2s cubic-bezier(.22,.8,.24,1) both}
+.wander-landing>p{font-size:clamp(15px,2vw,19px);max-width:420px;opacity:.52;margin:0 0 44px}
+.path-grid{gap:10px;max-width:780px}
+.path-card{position:relative;min-height:132px;background:rgba(255,255,255,.018);border-color:rgba(255,255,255,.075);backdrop-filter:blur(12px);transition:transform 650ms cubic-bezier(.22,.8,.24,1),background 450ms ease,border-color 450ms ease,filter 650ms ease,opacity 650ms ease}
+.path-card:hover{transform:translateY(-7px) scale(1.015);background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.18);box-shadow:0 20px 80px rgba(0,0,0,.25)}
+.path-card>span{font-size:21px;opacity:.45}
+.path-card small{opacity:.55}
+.wander-world.wander-opening .wander-landing{animation:wanderLandingExit 1000ms cubic-bezier(.22,.8,.24,1) both}
+.wander-world.wander-opening .wander-world-top{opacity:0}
+.wander-world.wander-opening .path-card{filter:blur(7px);opacity:0;transform:scale(1.04)}
+.wander-world.wander-opening .wander-atmosphere{animation:wanderWorldOpen 1200ms ease both}
+.wander-world.wander-inside .wander-atmosphere{opacity:.8}
+.wander-world.wander-inside .wander-landing{display:none}
+.wander-world.wander-inside .wander-world-top{opacity:.35}
+.wander-world.wander-inside .wander-world-top:hover,.wander-world.wander-inside .wander-world-top:focus-within{opacity:1}
+.wander-immersion{z-index:3}
+@keyframes wanderMistA{to{transform:translate(18vw,5vh) scale(1.12)}}
+@keyframes wanderMistB{to{transform:translate(-15vw,-8vh) scale(1.18)}}
+@keyframes wanderOrbitA{to{transform:translate(-50%,-50%) rotate(14deg)}}
+@keyframes wanderOrbitB{to{transform:translate(-50%,-50%) rotate(-26deg)}}
+@keyframes wanderGrain{0%{transform:translate(0,0)}25%{transform:translate(2%,-1%)}50%{transform:translate(-1%,2%)}75%{transform:translate(1%,1%)}100%{transform:translate(-2%,-1%)}}
+@keyframes wanderLetterBreath{50%{opacity:.65;letter-spacing:.34em}}
+@keyframes wanderDreamTitle{0%{opacity:0;transform:translateY(24px) scale(.98);filter:blur(12px)}100%{opacity:1;transform:none;filter:blur(0)}}
+@keyframes wanderLandingExit{0%{opacity:1;transform:none;filter:blur(0)}100%{opacity:0;transform:scale(1.045);filter:blur(12px)}}
+@keyframes wanderWorldOpen{0%{filter:blur(0);transform:scale(1)}100%{filter:blur(3px);transform:scale(1.04)}}
+@media(max-width:600px){
+  .wander-landing{padding:5vh 0 8vh}
+  .wander-landing h2{font-size:clamp(48px,16vw,78px)}
+  .path-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .path-card{min-height:118px;padding:14px;border-radius:18px}
+  .path-card small{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .wander-mist,.wander-orbit,.wander-grain,.wander-landing h2,.wander-landing .eyebrow:first-child{animation:none!important}
+  .path-card,.wander-world-top{transition:none!important}
+}

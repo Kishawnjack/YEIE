@@ -558,10 +558,17 @@ function setWanderLoading(isLoading){
 async function enterWander(category){
   if(wanderLoading)return;
   wanderCategory=category; wanderTrail=[]; setWanderLoading(true);
+  const world=$("wanderWorld");
+  world.classList.remove("wander-inside");
+  world.classList.add("wander-opening");
   $("wanderLanding").classList.add("hidden");
   $("wanderImmersion").classList.remove("hidden");
   $("wanderCategory").textContent=category==="unsure"?"I'M NOT SURE":category.toUpperCase();
   try{
+    // Give the threshold a moment to become a felt doorway rather than an instant route change.
+    await new Promise(r=>setTimeout(r,650));
+    world.classList.remove("wander-opening");
+    world.classList.add("wander-inside");
     wanderCurrent=await scoutNext(category);
     renderWanderItem(wanderCurrent);
     resetWanderControls();
@@ -614,6 +621,8 @@ function leaveWanderWorld(){
   if(wanderLoading)return;
   if(wanderControlsTimer) clearTimeout(wanderControlsTimer);
   wanderCategory=null; wanderCurrent=null; wanderTrail=[];
+  const world=$("wanderWorld");
+  world.classList.remove("wander-inside","wander-opening");
   $("wanderImmersion").classList.add("hidden");
   $("wanderLanding").classList.remove("hidden");
 }
