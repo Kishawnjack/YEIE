@@ -31,6 +31,7 @@ function showView(id,travel=true){
     $(id).classList.add("active");
     document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===id));
     currentView=id;
+    document.body.dataset.view=id;
     scrollTo(0,0);
   };
   if(!needsPortal){commit();return;}
@@ -125,18 +126,68 @@ function renderFound(){
   switcher.querySelectorAll("[data-trail]").forEach(btn=>btn.onclick=()=>renderTrail(btn.dataset.trail));
   renderTrail(active.id);
 }
+function trailLayout(total){
+  if(!total)return [];
+  const cols=total<=8?total:(total<=14?7:8);
+  const rows=Math.ceil(total/cols);
+  const points=[];
+  for(let i=0;i<total;i++){
+    const row=Math.floor(i/cols);
+    const slot=i%cols;
+    const direction=row%2===0?slot:(cols-1-slot);
+    const x=8+(direction/Math.max(1,cols-1))*84 + Math.sin(i*.72)*1.4;
+    const y=18+(row/Math.max(1,rows-1))*64 + Math.sin(i*1.17)*2.6;
+    points.push({x:Number(x.toFixed(2)),y:Number(y.toFixed(2))});
+  }
+  return points;
+}
+function smoothTrailPath(points){
+  if(!points.length)return "";
+  if(points.length===1)return `M ${points[0].x} ${points[0].y}`;
+  let d=`M ${points[0].x} ${points[0].y}`;
+  for(let i=0;i<points.length-1;i++){
+    const a=points[i], b=points[i+1];
+    const midX=(a.x+b.x)/2, midY=(a.y+b.y)/2;
+    d+=` Q ${midX} ${a.y} ${midX} ${midY} T ${b.x} ${b.y}`;
+  }
+  return d;
+}
 function renderTrail(id){
   const trail=state.trails.find(t=>t.id===id); if(!trail)return;
-  const map=$("trailMap");
-  map.innerHTML=`<div class="trail-map-title"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div><div class="trail-road"></div>`+
-    (trail.nodes||[]).map((n,i)=>{
+  const map=$("trailMap"), nodes=trail.nodes||[], points=trailLayout(nodes.length);
+  const path=smoothTrailPath(points);
+  const markerStart=points[0], markerEnd=points[points.length-1];
+  const svg=`<svg class="trail-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="trailGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#65a8ff"/><stop offset="35%" stop-color="#ff67b6"/><stop offset="68%" stop-color="#ffd24d"/><stop offset="100%" stop-color="#62e58c"/>
+      </linearGradient>
+      <filter id="trailGlow"><feGaussianBlur stdDeviation="1.1" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <marker id="trailArrow" markerWidth="4" markerHeight="4" refX="3.2" refY="2" orient="auto"><path d="M0,0 L4,2 L0,4 Z" fill="rgba(255,255,255,.62)"/></marker>
+    </defs>
+    <path class="trail-route-shadow" d="${path}"/>
+    <path class="trail-route-line" d="${path}"/>
+    ${points.filter((_,i)=>i>0 && i<nodes.length-1 && i%4===0).map((p,i)=>`<circle class="trail-route-beacon" cx="${p.x}" cy="${p.y}" r=".55"/>`).join("")}
+  </svg>`;
+  const startMarkup=markerStart?`<div class="trail-terminal trail-start" style="left:${markerStart.x}%;top:${markerStart.y}%"><span>START</span></div>`:"";
+  const endMarkup=markerEnd?`<div class="trail-terminal trail-end" style="left:${markerEnd.x}%;top:${markerEnd.y}%"><span>NOW</span></div>`:"";
+  const legend=`<div class="trail-map-legend">
+    <span><i class="legend-dot keep-dot"></i> KEEP</span>
+    <span><i class="legend-dot sound-dot"></i> SOUND</span>
+    <span><i class="legend-dot words-dot"></i> WORDS</span>
+    <span><i class="legend-dot film-dot"></i> FILM</span>
+    <span><i class="legend-dot visuals-dot"></i> VISUALS</span>
+  </div>`;
+  map.innerHTML=`<div class="trail-map-title"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div>${svg}${startMarkup}${endMarkup}${legend}`+
+    nodes.map((n,i)=>{
       const keep=n.action==="keep";
-      const left=8+(i/(Math.max(1,(trail.nodes.length-1))))*84;
-      const top=50+Math.sin(i*1.18)*28 + (i%2?6:-6);
-      return `<button class="trail-node ${keep?"is-keep":""}" style="left:${left}%;top:${top}%" data-node="${esc(n.id)}" aria-label="${esc(n.title)}">${keep?"★":""}<span class="trail-node-pop">${nodePreview(n)}</span></button>`;
+      const cat=String(n.category||"unsure").toLowerCase();
+      const p=points[i]||{x:50,y:50};
+      return `<button class="trail-node node-${esc(cat)} ${keep?"is-keep":"is-wander"}" style="left:${p.x}%;top:${p.y}%" data-node="${esc(n.id)}" aria-label="${esc(n.title)}">${keep?"★":""}<span class="trail-node-pop">${nodePreview(n)}</span></button>`;
     }).join("");
   map.querySelectorAll("[data-node]").forEach(btn=>btn.onclick=()=>openTrailNode(btn.dataset.node,trail.id));
 }
+
 function openTrailNode(nodeId,trailId){
   const trail=state.trails.find(t=>t.id===trailId), n=trail?.nodes.find(x=>x.id===nodeId); if(!n)return;
   const detail=$("trailDetail");
