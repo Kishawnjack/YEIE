@@ -711,7 +711,7 @@ document.querySelectorAll("[data-wander-category]").forEach(btn=>{
 $("wanderNextBtn").onclick=advanceWander;
 $("wanderKeepBtn").onclick=keepWanderItem;
 // WANDER has no redundant back button inside the world.
-if($("wanderTrailBtn")) $("wanderTrailBtn").onclick=showWanderTrail;
+$("wanderTrailBtn").onclick=showWanderTrail;
 
 $("ideaForm").onsubmit=e=>{
   e.preventDefault();
