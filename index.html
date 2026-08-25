@@ -57,7 +57,13 @@
 <form id="ideaForm"><label for="ideaInput">Capture what you found<input id="ideaInput" maxlength="200" placeholder="Give the thought a shape..."></label>
 <label for="ideaBodyInput">Keep wandering<textarea id="ideaBodyInput" rows="10" placeholder="Write, question, sketch in words, follow the thread..."></textarea></label>
 <div class="form-actions"><span class="muted small">Saved to Found</span><button type="submit" class="primary">Keep It</button></div></form></section>
-<section id="ideasView" class="view"><div class="wander-hero compact"><div class="eyebrow">THINGS WORTH FOLLOWING</div><h2>FOUND</h2><p>Your saved sparks from wandering.</p></div><div id="ideasList" class="entries empty-state"><p>You haven't found anything yet.</p><p>Go wander. Follow something.</p></div></section>
+<section id="ideasView" class="view found-screen">
+  <div class="found-head"><div><div class="eyebrow">YOUR WANDERING</div><h2>FOUND</h2><p>See where your curiosity took you.</p></div><div class="found-meta"><span id="trailCount">0 TRAILS</span><span id="foundCount">0 FOUND</span></div></div>
+  <div id="trailSwitcher" class="trail-switcher"></div>
+  <div class="trail-map-wrap"><div id="trailMap" class="trail-map" aria-label="Your creative trail"></div></div>
+  <div id="foundEmpty" class="found-empty hidden"><p>Your trail is waiting.</p><p>Wander. Something will appear here.</p></div>
+  <div id="trailDetail" class="trail-detail hidden"></div>
+</section>
 <nav class="nav"><button data-view="homeView" class="nav-btn active">⌂<span>Home</span></button><button data-view="wanderView" class="nav-btn">✦<span>Wander</span></button><button data-view="ideasView" class="nav-btn">↗<span>Found</span></button></nav></main>
 <div id="draftModal" class="modal hidden"><div class="modal-card">
 <h2>You left something behind.</h2>

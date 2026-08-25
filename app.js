@@ -6,9 +6,16 @@ try{
   state=JSON.parse(localStorage.getItem(KEY)||'{"entries":[],"ideas":[]}');
   state.entries ??=[];
   state.ideas ??=[];
-}catch{state={entries:[],ideas:[]}}
+  state.trails ??=[];
+}catch{state={entries:[],ideas:[],trails:[]}}
 
 const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+// V0.5 migration: preserve any pre-trail Found items inside the first trail.
+if(Array.isArray(state.ideas) && state.ideas.length && Array.isArray(state.trails) && !state.trails.length){
+  const first={id:"legacy-trail",startedAt:state.ideas[0].createdAt||new Date().toISOString(),endsAt:new Date(Date.now()+30*86400000).toISOString(),nodes:[],title:"Trail 1"};
+  first.nodes=state.ideas.map(i=>({id:i.id,title:i.title,content:i.body,category:i.category||"unsure",type:i.type||"FOUND",creator:i.creator,sourceLabel:i.sourceLabel,sourceUrl:i.sourceUrl,action:"keep",createdAt:i.createdAt||new Date().toISOString()}));
+  state.trails.push(first); save();
+}
 const nowISO=()=>new Date().toISOString();
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 const formatDate=iso=>new Date(iso).toLocaleString([],{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"});
@@ -73,20 +80,69 @@ function renderJournal(){
 
   b.querySelectorAll("[data-open]").forEach(x=>x.onclick=()=>openEntry(x.dataset.open));
 }
-function renderFound(){
-  const b=$("ideasList");
-  if(!state.ideas.length){
-    b.className="entries empty-state";
-    b.innerHTML="<p>You haven't found anything yet.</p><p>Go wander. Follow something.</p>";
-    return;
+function trailIdForDate(date=new Date()){
+  const y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,"0"), d=String(date.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+function ensureTrail(){
+  if(!Array.isArray(state.trails))state.trails=[];
+  const now=Date.now();
+  let trail=state.trails[state.trails.length-1];
+  if(!trail || now>=new Date(trail.endsAt).getTime()){
+    const start=new Date();
+    trail={id:crypto.randomUUID(),startedAt:start.toISOString(),endsAt:new Date(start.getTime()+30*86400000).toISOString(),nodes:[],title:`Trail ${state.trails.length+1}`};
+    state.trails.push(trail); save();
   }
-  b.className="entries";
-  b.innerHTML=[...state.ideas].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(i=>`
-    <article class="card">
-      <div class="card-title">${esc(i.title||"Untitled thought")}</div>
-      <div class="card-date">${formatDate(i.createdAt)}</div>
-      <div class="card-preview">${esc(i.body||"")}</div>
-    </article>`).join("");
+  return trail;
+}
+function currentTrail(){return state.trails?.[state.trails.length-1]||null;}
+function nodePreview(item){
+  const cat=String(item?.category||"unsure").toLowerCase();
+  const glyph={sound:"◌",words:"—",film:"◇",visuals:"◉",thoughts:"?",unsure:"…"}[cat]||"·";
+  return `<div class="node-preview node-${esc(cat)}"><span>${glyph}</span><b>${esc(item?.title||"Untitled discovery")}</b></div>`;
+}
+function recordTrailNode(item,action="encounter"){
+  const trail=ensureTrail();
+  if(!trail.nodes.some(n=>n.id===item.id)){
+    trail.nodes.push({id:item.id,title:item.title,content:item.content,category:item.category,type:item.type,creator:item.creator,sourceLabel:item.sourceLabel,sourceUrl:item.sourceUrl,action,createdAt:nowISO()});
+  }else if(action==="keep"){
+    const n=trail.nodes.find(n=>n.id===item.id); if(n)n.action="keep";
+  }
+  save();
+}
+function renderFound(){
+  const trails=Array.isArray(state.trails)?state.trails:[];
+  const total=trails.reduce((n,t)=>n+(t.nodes?.length||0),0);
+  $("trailCount").textContent=`${trails.length} TRAIL${trails.length===1?"":"S"}`;
+  $("foundCount").textContent=`${total} FOUND`;
+  const switcher=$("trailSwitcher"), map=$("trailMap"), empty=$("foundEmpty");
+  if(!trails.length || !total){
+    switcher.innerHTML=""; map.innerHTML=""; map.classList.add("hidden"); empty.classList.remove("hidden"); return;
+  }
+  map.classList.remove("hidden"); empty.classList.add("hidden");
+  const active=currentTrail();
+  switcher.innerHTML=trails.slice().reverse().map(t=>`<button class="trail-chip ${t.id===active.id?"active":""}" data-trail="${esc(t.id)}">${esc(t.title)} <span>${t.nodes?.length||0}</span></button>`).join("");
+  switcher.querySelectorAll("[data-trail]").forEach(btn=>btn.onclick=()=>renderTrail(btn.dataset.trail));
+  renderTrail(active.id);
+}
+function renderTrail(id){
+  const trail=state.trails.find(t=>t.id===id); if(!trail)return;
+  const map=$("trailMap");
+  map.innerHTML=`<div class="trail-map-title"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div><div class="trail-road"></div>`+
+    (trail.nodes||[]).map((n,i)=>{
+      const keep=n.action==="keep";
+      const left=8+(i/(Math.max(1,(trail.nodes.length-1))))*84;
+      const top=50+Math.sin(i*1.18)*28 + (i%2?6:-6);
+      return `<button class="trail-node ${keep?"is-keep":""}" style="left:${left}%;top:${top}%" data-node="${esc(n.id)}" aria-label="${esc(n.title)}">${keep?"★":""}<span class="trail-node-pop">${nodePreview(n)}</span></button>`;
+    }).join("");
+  map.querySelectorAll("[data-node]").forEach(btn=>btn.onclick=()=>openTrailNode(btn.dataset.node,trail.id));
+}
+function openTrailNode(nodeId,trailId){
+  const trail=state.trails.find(t=>t.id===trailId), n=trail?.nodes.find(x=>x.id===nodeId); if(!n)return;
+  const detail=$("trailDetail");
+  detail.classList.remove("hidden");
+  detail.innerHTML=`<button id="closeTrailDetail" class="detail-close" type="button">×</button>${nodePreview(n)}<div class="detail-type">${esc(n.type||n.category||"DISCOVERY")}</div><p>${esc(n.content||"")}</p>${n.creator?`<div class="detail-creator">${esc(n.creator)}</div>`:""}${n.sourceUrl?`<a href="${esc(n.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="detail-source">DISCOVER THE SOURCE ↗</a>`:""}`;
+  $("closeTrailDetail").onclick=()=>detail.classList.add("hidden");
 }
 
 function updateAutosaveStatus(){
@@ -584,6 +640,7 @@ function setWanderLoading(isLoading){
 async function enterWander(category){
   if(wanderLoading)return;
   wanderCategory=category; wanderTrail=[];
+  ensureTrail();
   wanderLoading=true;
   $("wanderKeepBtn").disabled=true;
   $("wanderNextBtn").disabled=true;
@@ -606,6 +663,7 @@ async function enterWander(category){
     finishWanderTeleport();
     resetWanderControls();
     wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"encounter",at:nowISO()});
+    recordTrailNode(wanderCurrent,"encounter");
     rememberWanderItem(wanderCurrent);
   }finally{
     setWanderLoading(false);
@@ -632,6 +690,7 @@ async function advanceWander(){
       $("wanderCategory").textContent=wanderCategory.toUpperCase();
     }
     wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"wander",at:nowISO()});
+    recordTrailNode(wanderCurrent,"wander");
     rememberWanderItem(wanderCurrent);
     renderWanderItem(wanderCurrent);
     finishWanderTeleport();
@@ -656,6 +715,7 @@ function keepWanderItem(){
     renderFound();
   }
   wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"keep",at:nowISO()});
+  recordTrailNode(wanderCurrent,"keep");
   advanceWander();
 }
 
