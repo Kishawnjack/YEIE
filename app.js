@@ -681,7 +681,7 @@ wanderWorld.addEventListener("touchstart",()=>revealWanderControls(),{passive:tr
 document.querySelectorAll("[data-wander-category]").forEach(btn=>btn.onclick=()=>enterWander(btn.dataset.wanderCategory));
 $("wanderNextBtn").onclick=advanceWander;
 $("wanderKeepBtn").onclick=keepWanderItem;
-$("wanderBackBtn").onclick=leaveWanderWorld;
+// WANDER has no redundant back button inside the world.
 $("wanderTrailBtn").onclick=showWanderTrail;
 
 $("ideaForm").onsubmit=e=>{

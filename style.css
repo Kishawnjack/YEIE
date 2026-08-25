@@ -180,3 +180,75 @@
 @media(prefers-reduced-motion:reduce){
   .wander-world.wander-teleport .wander-atmosphere,.wander-world.wander-teleport .wander-immersion,.wander-world.wander-teleport-arrive .wander-immersion{animation:none!important}
 }
+
+
+/* V0.4.6 — FULLSCREEN TELEPORT: WANDER takes over the viewport and travel feels like crossing space. */
+#wanderView.active{
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100dvh;
+  min-height:100dvh;
+  margin:0;
+  padding:0;
+  z-index:9999;
+  overflow:hidden;
+  background:#08090d;
+}
+#wanderView.active .wander-world{
+  width:100vw;
+  min-height:100dvh;
+  height:100dvh;
+}
+#wanderView.active .wander-world-top{
+  padding:calc(8px + env(safe-area-inset-top)) clamp(18px,4vw,56px) 0;
+}
+#wanderView.active .wander-landing{
+  min-height:100dvh;
+  padding:calc(8vh + env(safe-area-inset-top)) clamp(18px,6vw,90px) calc(10vh + env(safe-area-inset-bottom));
+}
+#wanderView.active .wander-immersion{
+  min-height:100dvh;
+  padding:calc(7vh + env(safe-area-inset-top)) clamp(18px,7vw,110px) calc(8vh + env(safe-area-inset-bottom));
+}
+/* Remove the top-left navigation entirely inside WANDER. */
+#wanderView .wander-world-top .back{display:none!important}
+/* The teleport acts on the entire world, not merely the encounter text. */
+#wanderView.active .wander-world.wander-teleport{
+  animation:wanderFullTeleport 620ms cubic-bezier(.08,.86,.12,1) both!important;
+  transform-origin:50% 50%;
+}
+#wanderView.active .wander-world.wander-teleport .wander-atmosphere{
+  animation:wanderTeleportFieldFull 620ms cubic-bezier(.08,.86,.12,1) both!important;
+}
+#wanderView.active .wander-world.wander-teleport .wander-immersion{
+  animation:none!important;
+}
+#wanderView.active .wander-world.wander-teleport .wander-result,
+#wanderView.active .wander-world.wander-teleport #wanderResult{
+  transform-origin:50% 50%;
+}
+@keyframes wanderFullTeleport{
+  0%{opacity:1;transform:scale(1);filter:blur(0)}
+  22%{transform:scale(1.035);filter:blur(.5px)}
+  58%{opacity:.82;transform:scale(1.42);filter:blur(5px)}
+  82%{opacity:.28;transform:scale(2.05);filter:blur(14px)}
+  100%{opacity:0;transform:scale(2.75);filter:blur(24px)}
+}
+@keyframes wanderTeleportFieldFull{
+  0%{transform:scale(1);filter:blur(0);opacity:.8}
+  100%{transform:scale(2.9);filter:blur(28px);opacity:0}
+}
+#wanderView.active .wander-world.wander-teleport-arrive{
+  animation:wanderWorldArrive .680s cubic-bezier(.18,.84,.18,1) both;
+}
+@keyframes wanderWorldArrive{
+  0%{opacity:0;transform:scale(.72);filter:blur(20px)}
+  58%{opacity:.9;transform:scale(1.025);filter:blur(2px)}
+  100%{opacity:1;transform:scale(1);filter:blur(0)}
+}
+@media(prefers-reduced-motion:reduce){
+  #wanderView.active .wander-world.wander-teleport,
+  #wanderView.active .wander-world.wander-teleport .wander-atmosphere,
+  #wanderView.active .wander-world.wander-teleport-arrive{animation:none!important}
+}
