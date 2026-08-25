@@ -37,6 +37,7 @@ function showView(id,travel=true){
   };
   if(!needsPortal){commit();return;}
   const portal=$("pagePortal");
+  if(!portal){ commit(); return; }
   if(pageTravelTimer)clearTimeout(pageTravelTimer);
   document.body.classList.add("page-traveling");
   portal.classList.remove("active");
@@ -836,13 +837,16 @@ $("ideaForm").onsubmit=e=>{
 
 $("ideaBackBtn").onclick=()=>showView("wanderView");
 
-$("homeJournalBtn").onclick=()=>{renderJournal();showView("journalView",true);};
-$("homeWanderBtn").onclick=()=>{showView("wanderView",true);};
-
-document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>{
-  if(b.dataset.view==="journalView")renderJournal();
-  if(b.dataset.view==="ideasView")renderFound();
-  showView(b.dataset.view);
+document.querySelectorAll(".nav-btn").forEach(b=>{
+  b.addEventListener("click",e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    const view=b.dataset.view;
+    if(!view || !document.getElementById(view)) return;
+    if(view==="journalView") renderJournal();
+    if(view==="ideasView") renderFound();
+    showView(view);
+  });
 });
 
 $("lockBtn").onclick=()=>$("privacyModal").classList.remove("hidden");
@@ -879,4 +883,5 @@ window.addEventListener("scroll",()=>{
 renderJournal();
 renderFound();
 showView("homeView",false);
+document.documentElement.dataset.yeieReady="true";
 handleDraftOnReturn();
