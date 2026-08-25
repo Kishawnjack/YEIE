@@ -25,7 +25,8 @@ let currentView="homeView";
 let pageTravelTimer=null;
 function showView(id,travel=true){
   const from=currentView;
-  const needsPortal=travel && from!==id && (from==="homeView" || id==="homeView");
+  const majorViews=new Set(["homeView","journalView","wanderView","ideasView"]);
+  const needsPortal=travel && from!==id && majorViews.has(from) && majorViews.has(id);
   const commit=()=>{
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
     $(id).classList.add("active");
