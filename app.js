@@ -352,33 +352,43 @@ $("backBtn").onclick=()=>{
 };
 
 /*
- V0.4.0 WANDER + SCOUT
+ V0.4.1 WANDER + SCOUT — rabbit-hole sequencing
  The UI consumes one normalized Inspiration record whether it comes from
  the local fallback catalog or the YEIE Scout Worker.
 */
 const SCOUT_ENDPOINT="https://yeie-scout.peteyrealmusic.workers.dev/scout";
-const SCOUT_TIMEOUT_MS=7000;
+const SCOUT_TIMEOUT_MS=12000;
+const WANDER_HISTORY_KEY="yeie_wander_history_v041";
+const WANDER_RECENT_LIMIT=40;
 
 const INSPIRATIONS=[
-{id:"sound-001",category:"sound",type:"SONG",title:"Start with a song you didn't expect.",content:"Listen without analyzing it. Notice the first thing your body reacts to: rhythm, texture, voice, or space.",creator:null,sourceLabel:null,sourceUrl:null,tags:["listening","unexpected"],connections:["sound-002","film-001"]},
-{id:"sound-002",category:"sound",type:"SOUND",title:"Find music inside an ordinary sound.",content:"A machine. A room. A voice. A mistake. Stop asking what it is and start asking what it could become.",creator:null,sourceLabel:null,sourceUrl:null,tags:["field-recording","sampling"],connections:["visual-001","sound-003"]},
-{id:"sound-003",category:"sound",type:"PROCESS",title:"The studio is allowed to be uncertain.",content:"Creative work does not always begin with an answer. Sometimes the useful move is changing the question, changing the sound, or leaving the mistake alone.",creator:null,sourceLabel:null,sourceUrl:null,tags:["process","studio"],connections:["thought-001","sound-004"]},
-{id:"sound-004",category:"sound",type:"PROCESS",title:"Listen to somebody explain how they make.",content:"A producer, musician, engineer, or artist describing the moment something finally clicked can be as inspiring as the finished work.",creator:null,sourceLabel:null,sourceUrl:null,tags:["process","artists"],connections:["words-002","sound-001"]},
-{id:"words-001",category:"words",type:"LINE",title:"Follow a sentence.",content:"Find one sentence that makes you stop. Don't explain why. Let the sentence lead you somewhere else.",creator:null,sourceLabel:null,sourceUrl:null,tags:["writing","language"],connections:["words-002","film-002"]},
-{id:"words-002",category:"words",type:"STORY",title:"A story can become a sample.",content:"A line from someone's life can become a lyric, a scene, a visual, a rhythm, or an entire project.",creator:null,sourceLabel:null,sourceUrl:null,tags:["story","cross-medium"],connections:["sound-004","film-003"]},
-{id:"words-003",category:"words",type:"WORDS",title:"Read something outside your lane.",content:"A paragraph from a writer, artist, scientist, poet, or stranger can change the shape of an idea you were already carrying.",creator:null,sourceLabel:null,sourceUrl:null,tags:["reading","cross-disciplinary"],connections:["thought-002","visual-002"]},
-{id:"film-001",category:"film",type:"SCENE",title:"Watch the moment before the moment.",content:"Find a scene where almost nothing happens. Pay attention to what the camera, silence, framing, and timing make you feel.",creator:null,sourceLabel:null,sourceUrl:null,tags:["cinema","silence"],connections:["sound-002","film-002"]},
-{id:"film-002",category:"film",type:"PROCESS",title:"Study the choice, not the spectacle.",content:"Look for a filmmaking decision you would not have made. That's often where the useful inspiration lives.",creator:null,sourceLabel:null,sourceUrl:null,tags:["cinematography","process"],connections:["visual-003","words-001"]},
-{id:"film-003",category:"film",type:"STORY",title:"Let a scene change the question.",content:"Don't ask what the scene means yet. Ask what it makes you curious about.",creator:null,sourceLabel:null,sourceUrl:null,tags:["story","curiosity"],connections:["thought-001","words-002"]},
-{id:"visual-001",category:"visuals",type:"IMAGE",title:"Follow the texture.",content:"Find an image you can almost feel. Follow its light, color, texture, imperfection, or composition.",creator:null,sourceLabel:null,sourceUrl:null,tags:["texture","image"],connections:["sound-002","visual-002"]},
-{id:"visual-002",category:"visuals",type:"COLOR",title:"Let a color start the world.",content:"Pick a color you wouldn't normally use. Imagine the room, song, person, film, or memory that belongs inside it.",creator:null,sourceLabel:null,sourceUrl:null,tags:["color","worldbuilding"],connections:["words-003","visual-003"]},
-{id:"visual-003",category:"visuals",type:"REFERENCE",title:"See something you would never have searched for.",content:"The useful reference is sometimes the one you didn't know existed.",creator:null,sourceLabel:null,sourceUrl:null,tags:["reference","discovery"],connections:["film-002","thought-003"]},
-{id:"thought-001",category:"thoughts",type:"QUESTION",title:"Borrow a question, not an answer.",content:"What is something you believe because somebody else taught you to believe it?",creator:null,sourceLabel:null,sourceUrl:null,tags:["identity","questions"],connections:["sound-003","film-003"]},
-{id:"thought-002",category:"thoughts",type:"THOUGHT",title:"Make the obvious strange.",content:"Take something completely normal in your life and imagine you have never seen it before.",creator:null,sourceLabel:null,sourceUrl:null,tags:["observation","perspective"],connections:["words-003","visual-001"]},
-{id:"thought-003",category:"thoughts",type:"PERSPECTIVE",title:"Enter somebody else's world for a minute.",content:"Find a perspective you don't naturally share. Don't debate it. Wander around inside it.",creator:null,sourceLabel:null,sourceUrl:null,tags:["perspective","empathy"],connections:["visual-003","words-001"]},
-{id:"unsure-001",category:"unsure",type:"SURPRISE",title:"You don't have to know.",content:"Start anywhere. A sound. A face. A color. A sentence. A memory. Something you saw today. Follow whatever catches you.",creator:null,sourceLabel:null,sourceUrl:null,tags:["uncertainty"],connections:["sound-001","visual-001","words-001"]},
-{id:"unsure-002",category:"unsure",type:"SURPRISE",title:"Go toward the thing you can't name.",content:"The fact that you don't know what you're looking for is enough. Let the first spark choose the direction.",creator:null,sourceLabel:null,sourceUrl:null,tags:["uncertainty","intuition"],connections:["thought-001","film-003"]},
-{id:"unsure-003",category:"unsure",type:"SURPRISE",title:"Open a door you weren't looking for.",content:"The next useful thing may have nothing to do with what you thought you came here for.",creator:null,sourceLabel:null,sourceUrl:null,tags:["surprise","cross-medium"],connections:["visual-003","sound-004"]}
+{id:"real-damii",category:"sound",type:"SONG",title:"The Art of Evolving in Silence",content:"A musical encounter about growth, silence, identity, and becoming.",creator:"DAMII",sourceLabel:"YouTube",sourceUrl:"https://youtu.be/1899JtZB8UE",tags:["music","growth","identity"],connections:["real-dustin","real-sampling","real-perrys"]},
+{id:"real-perrys",category:"words",type:"CONVERSATION",title:"A Word for Writers and Sufferers of Writer's Block",content:"A conversation about writing, creative struggle, and getting unstuck.",creator:"With The Perrys",sourceLabel:"YouTube",sourceUrl:"https://youtu.be/36L9cYkHyZM",tags:["writing","creative-block","process"],connections:["real-damii","real-mattcapone","words-003"]},
+{id:"real-one-second-late",category:"film",type:"SHORT FILM",title:"ONE SECOND LATE",content:"A short film to wander into when a tiny moment, a decision, or a fraction of time might change everything.",creator:null,sourceLabel:"YouTube",sourceUrl:"https://www.youtube.com/watch?v=QibQLlM-C_I",tags:["film","time","choice"],connections:["real-damii","real-dustin","film-002"]},
+{id:"real-sampling",category:"sound",type:"ESSAY VIDEO",title:"THIS IS WHY SAMPLING IS ART",content:"A look at sampling as an art form — a doorway from listening into taking something old and making it speak differently.",creator:"RUDE_NOISE",sourceLabel:"YouTube",sourceUrl:"https://www.youtube.com/watch?v=Kz0XIf4Eq90",tags:["sampling","music","art"],connections:["real-paintings","real-damii","sound-002"]},
+{id:"real-dustin",category:"thoughts",type:"ARTIST TALK",title:"A Journey Through the Mind of an Artist",content:"An artist's way of seeing, building, thinking, and making — a reminder that process itself can be a world worth wandering through.",creator:"Dustin Yellin",sourceLabel:"TED",sourceUrl:"https://www.ted.com/talks/dustin_yellin_a_journey_through_the_mind_of_an_artist",tags:["art","process","perspective"],connections:["real-paintings","real-one-second-late","thought-003"]},
+{id:"real-mattcapone",category:"words",type:"SPOKEN WORD",title:"A Love Poem",content:"A spoken-word performance. Let the rhythm of the language do the work before you decide what the words mean.",creator:"Matt Capone",sourceLabel:"Voices In Power",sourceUrl:null,tags:["poetry","spoken-word","performance"],connections:["real-perrys","real-damii","words-001"]},
+{id:"real-paintings",category:"visuals",type:"PAINTINGS",title:"Let a painting interrupt you.",content:"Don't search for the perfect painting. Find one that makes you stop. Stay with the color, gesture, scale, or thing you can't explain.",creator:null,sourceLabel:null,sourceUrl:null,tags:["painting","color","gesture"],connections:["real-sampling","real-dustin","visual-001"]},
+{id:"real-quotes",category:"words",type:"QUOTES",title:"A sentence can be a doorway.",content:"Find a quote from an artist, writer, filmmaker, producer, or stranger that you would normally scroll past. Keep the sentence in your head for a while.",creator:null,sourceLabel:null,sourceUrl:null,tags:["quotes","language","artists"],connections:["real-mattcapone","real-perrys","thought-001"]},
+{id:"sound-001",category:"sound",type:"SONG",title:"Start with a song you didn't expect.",content:"Listen without analyzing it. Notice the first thing your body reacts to: rhythm, texture, voice, or space.",creator:null,sourceLabel:null,sourceUrl:null,tags:["listening","unexpected"],connections:["sound-002","real-sampling","real-one-second-late"]},
+{id:"sound-002",category:"sound",type:"SOUND",title:"Find music inside an ordinary sound.",content:"A machine. A room. A voice. A mistake. Stop asking what it is and start asking what it could become.",creator:null,sourceLabel:null,sourceUrl:null,tags:["field-recording","sampling"],connections:["visual-001","real-sampling","sound-003"]},
+{id:"sound-003",category:"sound",type:"PROCESS",title:"The studio is allowed to be uncertain.",content:"Creative work does not always begin with an answer. Sometimes the useful move is changing the question, changing the sound, or leaving the mistake alone.",creator:null,sourceLabel:null,sourceUrl:null,tags:["process","studio"],connections:["thought-001","real-damii","sound-004"]},
+{id:"sound-004",category:"sound",type:"PROCESS",title:"Listen to somebody explain how they make.",content:"A producer, musician, engineer, or artist describing the moment something finally clicked can be as inspiring as the finished work.",creator:null,sourceLabel:null,sourceUrl:null,tags:["process","artists"],connections:["real-perrys","real-damii","sound-001"]},
+{id:"words-001",category:"words",type:"LINE",title:"Follow a sentence.",content:"Find one sentence that makes you stop. Don't explain why. Let the sentence lead you somewhere else.",creator:null,sourceLabel:null,sourceUrl:null,tags:["writing","language"],connections:["real-mattcapone","real-one-second-late","film-002"]},
+{id:"words-002",category:"words",type:"STORY",title:"A story can become a sample.",content:"A line from someone's life can become a lyric, a scene, a visual, a rhythm, or an entire project.",creator:null,sourceLabel:null,sourceUrl:null,tags:["story","cross-medium"],connections:["real-sampling","real-one-second-late","film-003"]},
+{id:"words-003",category:"words",type:"WORDS",title:"Read something outside your lane.",content:"A paragraph from a writer, artist, scientist, poet, or stranger can change the shape of an idea you were already carrying.",creator:null,sourceLabel:null,sourceUrl:null,tags:["reading","cross-disciplinary"],connections:["real-dustin","real-paintings","thought-002"]},
+{id:"film-001",category:"film",type:"SCENE",title:"Watch the moment before the moment.",content:"Find a scene where almost nothing happens. Pay attention to what the camera, silence, framing, and timing make you feel.",creator:null,sourceLabel:null,sourceUrl:null,tags:["cinema","silence"],connections:["real-one-second-late","sound-002","film-002"]},
+{id:"film-002",category:"film",type:"PROCESS",title:"Study the choice, not the spectacle.",content:"Look for a filmmaking decision you would not have made. That's often where the useful inspiration lives.",creator:null,sourceLabel:null,sourceUrl:null,tags:["cinematography","process"],connections:["real-dustin","visual-003","words-001"]},
+{id:"film-003",category:"film",type:"STORY",title:"Let a scene change the question.",content:"Don't ask what the scene means yet. Ask what it makes you curious about.",creator:null,sourceLabel:null,sourceUrl:null,tags:["story","curiosity"],connections:["real-perrys","thought-001","words-002"]},
+{id:"visual-001",category:"visuals",type:"IMAGE",title:"Follow the texture.",content:"Find an image you can almost feel. Follow its light, color, texture, imperfection, or composition.",creator:null,sourceLabel:null,sourceUrl:null,tags:["texture","image"],connections:["real-paintings","sound-002","visual-002"]},
+{id:"visual-002",category:"visuals",type:"COLOR",title:"Let a color start the world.",content:"Pick a color you wouldn't normally use. Imagine the room, song, person, film, or memory that belongs inside it.",creator:null,sourceLabel:null,sourceUrl:null,tags:["color","worldbuilding"],connections:["real-paintings","words-003","visual-003"]},
+{id:"visual-003",category:"visuals",type:"REFERENCE",title:"See something you would never have searched for.",content:"The useful reference is sometimes the one you didn't know existed.",creator:null,sourceLabel:null,sourceUrl:null,tags:["reference","discovery"],connections:["real-dustin","film-002","thought-003"]},
+{id:"thought-001",category:"thoughts",type:"QUESTION",title:"Borrow a question, not an answer.",content:"What is something you believe because somebody else taught you to believe it?",creator:null,sourceLabel:null,sourceUrl:null,tags:["identity","questions"],connections:["real-perrys","real-damii","film-003"]},
+{id:"thought-002",category:"thoughts",type:"THOUGHT",title:"Make the obvious strange.",content:"Take something completely normal in your life and imagine you have never seen it before.",creator:null,sourceLabel:null,sourceUrl:null,tags:["observation","perspective"],connections:["real-dustin","real-paintings","words-003"]},
+{id:"thought-003",category:"thoughts",type:"PERSPECTIVE",title:"Enter somebody else's world for a minute.",content:"Find a perspective you don't naturally share. Don't debate it. Wander around inside it.",creator:null,sourceLabel:null,sourceUrl:null,tags:["perspective","empathy"],connections:["real-dustin","visual-003","words-001"]},
+{id:"unsure-001",category:"unsure",type:"SURPRISE",title:"You don't have to know.",content:"Start anywhere. A sound. A face. A color. A sentence. A memory. Something you saw today. Follow whatever catches you.",creator:null,sourceLabel:null,sourceUrl:null,tags:["uncertainty"],connections:["real-damii","real-paintings","real-mattcapone"]},
+{id:"unsure-002",category:"unsure",type:"SURPRISE",title:"Go toward the thing you can't name.",content:"The fact that you don't know what you're looking for is enough. Let the first spark choose the direction.",creator:null,sourceLabel:null,sourceUrl:null,tags:["uncertainty","intuition"],connections:["real-dustin","real-one-second-late","real-quotes"]},
+{id:"unsure-003",category:"unsure",type:"SURPRISE",title:"Open a door you weren't looking for.",content:"The next useful thing may have nothing to do with what you thought you came here for.",creator:null,sourceLabel:null,sourceUrl:null,tags:["surprise","cross-medium"],connections:["real-sampling","real-mattcapone","real-paintings"]}
 ];
 
 function normalizeScoutItem(item, fallbackCategory="unsure"){
@@ -397,23 +407,49 @@ function normalizeScoutItem(item, fallbackCategory="unsure"){
   };
 }
 
+function readWanderHistory(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(WANDER_HISTORY_KEY)||"[]");
+    return Array.isArray(parsed)?parsed.filter(x=>x&&x.id):[];
+  }catch{return []}
+}
+
+function recentWanderIds(){
+  return new Set(readWanderHistory().slice(-WANDER_RECENT_LIMIT).map(x=>x.id));
+}
+
+function rememberWanderItem(item){
+  if(!item?.id)return;
+  const history=readWanderHistory().filter(x=>x.id!==item.id);
+  history.push({id:item.id,seenAt:Date.now()});
+  localStorage.setItem(WANDER_HISTORY_KEY,JSON.stringify(history.slice(-WANDER_RECENT_LIMIT)));
+}
+
 function localScoutNext(preferredCategory){
-  const history=wanderTrail.map(x=>x.item.id);
+  const sessionIds=new Set(wanderTrail.map(x=>x.item.id));
+  const recentIds=recentWanderIds();
   const current=wanderCurrent;
-  const connected=(current?.connections||[]).map(id=>INSPIRATIONS.find(x=>x.id===id)).filter(Boolean).filter(x=>x.id!==current?.id);
-  const fresh=INSPIRATIONS.filter(x=>!history.includes(x.id)&&x.id!==current?.id);
+  const connected=(current?.connections||[])
+    .map(id=>INSPIRATIONS.find(x=>x.id===id))
+    .filter(Boolean)
+    .filter(x=>x.id!==current?.id&&!sessionIds.has(x.id));
+
+  const fresh=INSPIRATIONS.filter(x=>x.id!==current?.id&&!sessionIds.has(x.id)&&!recentIds.has(x.id));
   const same=fresh.filter(x=>x.category===preferredCategory);
   const wildcard=fresh.filter(x=>x.category!==preferredCategory);
 
-  if(connected.length && Math.random()<.45)return connected[Math.floor(Math.random()*connected.length)];
-  if(same.length && Math.random()<.70)return same[Math.floor(Math.random()*same.length)];
-  if(wildcard.length && Math.random()<.125)return wildcard[Math.floor(Math.random()*wildcard.length)];
-  return same[0]||fresh[0]||INSPIRATIONS[Math.floor(Math.random()*INSPIRATIONS.length)];
+  if(connected.length&&Math.random()<0.72)return connected[Math.floor(Math.random()*connected.length)];
+  if(same.length&&Math.random()<0.60)return same[Math.floor(Math.random()*same.length)];
+  if(wildcard.length)return wildcard[Math.floor(Math.random()*wildcard.length)];
+
+  const sessionFresh=INSPIRATIONS.filter(x=>x.id!==current?.id&&!sessionIds.has(x.id));
+  const sameOld=sessionFresh.filter(x=>x.category===preferredCategory);
+  return sameOld[0]||sessionFresh[0]||INSPIRATIONS[Math.floor(Math.random()*INSPIRATIONS.length)];
 }
 
 async function fetchScout(preferredCategory){
   const category=preferredCategory==="unsure"?"not-sure":preferredCategory;
-  const seen=wanderTrail.map(x=>x.item.id).filter(Boolean).slice(-30);
+  const seen=[...new Set([...wanderTrail.map(x=>x.item.id),...recentWanderIds()])].filter(Boolean).slice(-40);
   const params=new URLSearchParams({category});
   seen.forEach(id=>params.append("seen",id));
 
@@ -437,11 +473,18 @@ async function fetchScout(preferredCategory){
 }
 
 async function scoutNext(preferredCategory){
+  const localCandidate=localScoutNext(preferredCategory);
+  const currentConnections=(wanderCurrent?.connections||[]).length>0;
+
+  if(currentConnections&&localCandidate&&Math.random()<0.70)return localCandidate;
+
   try{
-    return await fetchScout(preferredCategory);
+    const item=await fetchScout(preferredCategory);
+    if(item&&item.id!==wanderCurrent?.id&&!wanderTrail.some(x=>x.item.id===item.id))return item;
+    return localCandidate;
   }catch(error){
-    console.warn("YEIE Scout unavailable; using local fallback.",error);
-    return localScoutNext(preferredCategory);
+    console.warn("YEIE Scout unavailable; using local rabbit-hole fallback.",error);
+    return localCandidate;
   }
 }
 
@@ -449,6 +492,7 @@ let wanderCategory=null,wanderTrail=[],wanderCurrent=null,wanderLoading=false;
 
 function renderWanderItem(item){
   const creator=item.creator?`<div class="result-creator">${esc(item.creator)}</div>`:"";
+  $("wanderCategory").textContent=item.category==="unsure"?"I'M NOT SURE":item.category.toUpperCase();
   $("wanderResult").innerHTML=
     `<div class="result-kicker">${esc(item.type)}</div>
      <div class="result-title">${esc(item.title)}</div>
@@ -475,6 +519,7 @@ async function enterWander(category){
     wanderCurrent=await scoutNext(category);
     renderWanderItem(wanderCurrent);
     wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"encounter",at:nowISO()});
+    rememberWanderItem(wanderCurrent);
   }finally{
     setWanderLoading(false);
   }
@@ -490,6 +535,7 @@ async function advanceWander(){
       $("wanderCategory").textContent=wanderCategory.toUpperCase();
     }
     wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"wander",at:nowISO()});
+    rememberWanderItem(wanderCurrent);
     renderWanderItem(wanderCurrent);
   }finally{
     setWanderLoading(false);
