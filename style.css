@@ -486,3 +486,8 @@ body[data-view="wanderView"] .nav-btn.active{color:#fff}
 .app>.nav{pointer-events:auto!important;touch-action:manipulation!important;}
 .app>.nav .nav-btn{pointer-events:auto!important;position:relative;z-index:101!important;}
 .app>.nav{isolation:isolate;}
+
+
+/* V0.5.5 — WANDER NAV ABOVE FULLSCREEN WORLD */
+body[data-view="wanderView"] .app>.nav{z-index:10001!important;pointer-events:auto!important;}
+body[data-view="wanderView"] .app>.nav .nav-btn{z-index:10002!important;pointer-events:auto!important;}
