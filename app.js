@@ -695,8 +695,11 @@ $("ideaForm").onsubmit=e=>{
 
 $("ideaBackBtn").onclick=()=>showView("wanderView");
 
+$("homeJournalBtn").onclick=()=>{renderJournal();showView("journalView");};
+$("homeWanderBtn").onclick=()=>{showView("wanderView");};
+
 document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>{
-  if(b.dataset.view==="homeView")renderJournal();
+  if(b.dataset.view==="journalView")renderJournal();
   if(b.dataset.view==="ideasView")renderFound();
   showView(b.dataset.view);
 });

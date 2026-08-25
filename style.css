@@ -252,3 +252,76 @@
   #wanderView.active .wander-world.wander-teleport .wander-atmosphere,
   #wanderView.active .wander-world.wander-teleport-arrive{animation:none!important}
 }
+
+/* V0.4.7 — HOME GATEWAY + LIVING DOORS */
+#homeView.home-gateway{
+  position:relative;
+  min-height:calc(100dvh - 64px);
+  width:100vw;
+  margin-left:calc(50% - 50vw);
+  padding:clamp(70px,12vh,130px) clamp(22px,7vw,96px) 120px;
+  overflow:hidden;
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 22% 35%,rgba(220,230,255,.065),transparent 28%),
+    radial-gradient(circle at 78% 62%,rgba(155,125,255,.06),transparent 32%),
+    #08090d;
+}
+.home-world{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.home-world span{position:absolute;border:1px solid rgba(255,255,255,.05);border-radius:50%;filter:blur(.2px);animation:homeFloat 13s ease-in-out infinite alternate}
+.home-world span:nth-child(1){width:42vw;height:42vw;left:-12vw;top:8vh}
+.home-world span:nth-child(2){width:26vw;height:26vw;right:8vw;top:16vh;animation-delay:-4s}
+.home-world span:nth-child(3){width:58vw;height:22vw;left:20vw;bottom:-7vh;transform:rotate(-12deg);animation-delay:-7s}
+.home-world span:nth-child(4){width:18vw;height:18vw;right:-3vw;bottom:18vh;animation-delay:-2s}
+.home-hero{max-width:1050px;position:relative;z-index:2}
+.home-eyebrow{font-size:11px;letter-spacing:.3em;opacity:.5;animation:homeBreath 5s ease-in-out infinite}
+.home-hero h2{font-size:clamp(74px,13vw,190px);line-height:.78;letter-spacing:-.075em;font-weight:500;margin:20px 0 30px;max-width:1100px}
+.home-hero h2 em{font-style:normal;display:inline-block;background:linear-gradient(100deg,#fff 20%,#bfc5ff 55%,#fff 85%);background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:homeShimmer 8s linear infinite}
+.home-line{max-width:620px;font-size:clamp(18px,2.4vw,28px);line-height:1.35;color:#d4d4d8;margin:0}
+.home-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:1050px;margin-top:clamp(55px,10vh,110px);position:relative;z-index:3}
+.home-choice{position:relative;min-height:190px;padding:24px;border:1px solid rgba(255,255,255,.11);border-radius:28px;background:rgba(255,255,255,.025);color:var(--text);display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:end;text-align:left;overflow:hidden;backdrop-filter:blur(18px);transition:transform 500ms cubic-bezier(.18,.86,.2,1),border-color 400ms ease,background 400ms ease,box-shadow 500ms ease,filter 500ms ease}
+.home-choice::before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.15),transparent 30%),radial-gradient(circle at 80% 90%,rgba(145,125,255,.15),transparent 32%);opacity:0;transition:opacity 500ms ease;pointer-events:none}
+.home-choice:hover{transform:translateY(-8px) scale(1.02);border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.065);box-shadow:0 35px 100px rgba(0,0,0,.38),0 0 80px rgba(150,140,255,.08)}
+.home-choice:hover::before{opacity:1;animation:doorPulse 1.5s ease-in-out infinite alternate}
+.home-choice-mark{font-size:30px;opacity:.7;transition:transform 600ms cubic-bezier(.18,.86,.2,1),opacity 400ms ease}
+.home-choice:hover .home-choice-mark{transform:scale(1.45) rotate(20deg);opacity:1}
+.home-choice b{display:block;font-size:clamp(19px,2.4vw,28px);letter-spacing:.04em;position:relative}
+.home-choice small{display:block;color:#999;margin-top:8px;font-size:13px;line-height:1.4;position:relative}
+.home-choice i{font-style:normal;font-size:25px;opacity:.45;transition:transform 500ms cubic-bezier(.18,.86,.2,1),opacity 300ms ease}
+.home-choice:hover i{transform:translate(7px,-7px) scale(1.15);opacity:1}
+.home-choice-wander{border-color:rgba(210,220,255,.16)}
+.home-pulse{margin-top:32px;font-size:9px;letter-spacing:.3em;color:#666;position:relative;z-index:2;animation:homePulse 4s ease-in-out infinite}
+.journal-screen{min-height:calc(100vh - 120px);padding-bottom:40px}
+.journal-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:28px 0 38px}
+.journal-head h2{font-size:clamp(30px,5vw,44px);letter-spacing:-.045em;margin-top:8px}
+@keyframes homeFloat{to{transform:translate(4vw,-3vh) rotate(8deg) scale(1.06)}}
+@keyframes homeBreath{50%{opacity:.8;letter-spacing:.38em}}
+@keyframes homeShimmer{to{background-position:-220% center}}
+@keyframes doorPulse{to{transform:scale(1.04) rotate(2deg)}}
+@keyframes homePulse{50%{opacity:.35;letter-spacing:.38em}}
+
+/* The category doors should feel alive before they transport you. */
+.path-grid{perspective:1200px}
+.path-grid:has(.path-card:hover) .path-card:not(:hover){opacity:.38;filter:blur(1.5px) saturate(.65);transform:scale(.975)}
+.path-card{transform-origin:center center;overflow:hidden}
+.path-card::before{content:"";position:absolute;inset:-45%;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.16),transparent 27%),radial-gradient(circle at 82% 84%,rgba(135,125,255,.18),transparent 35%);opacity:0;transition:opacity 450ms ease,transform 700ms cubic-bezier(.18,.86,.2,1);pointer-events:none}
+.path-card::after{content:"ENTER →";position:absolute;right:18px;bottom:16px;font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.42);opacity:0;transform:translateX(-8px);transition:opacity 350ms ease,transform 500ms cubic-bezier(.18,.86,.2,1)}
+.path-card:hover{transform:translateY(-10px) scale(1.035) rotateX(1deg);background:rgba(255,255,255,.075);border-color:rgba(255,255,255,.28);box-shadow:0 30px 90px rgba(0,0,0,.42),0 0 90px rgba(130,120,255,.08)}
+.path-card:hover::before{opacity:1;transform:scale(1.08);animation:doorPulse 1.4s ease-in-out infinite alternate}
+.path-card:hover::after{opacity:1;transform:translateX(0)}
+.path-card>span,.path-card b,.path-card small{position:relative;z-index:1;transition:transform 500ms cubic-bezier(.18,.86,.2,1),opacity 350ms ease}
+.path-card:hover>span{transform:scale(1.35) rotate(12deg);opacity:1}
+.path-card:hover b{transform:translateX(3px)}
+.path-card:hover small{opacity:.8;transform:translateX(3px)}
+
+@media(max-width:700px){
+  #homeView.home-gateway{padding-top:70px}
+  .home-hero h2{font-size:clamp(64px,18vw,110px)}
+  .home-choices{grid-template-columns:1fr;margin-top:60px}
+  .home-choice{min-height:150px}
+  .journal-head{align-items:flex-start;flex-direction:column}
+}
+@media(prefers-reduced-motion:reduce){
+  .home-world span,.home-eyebrow,.home-hero h2 em,.home-pulse,.home-choice::before{animation:none!important}
+  .home-choice,.home-choice-mark,.home-choice i,.path-card,.path-card::before,.path-card::after{transition:none!important}
+}
