@@ -152,3 +152,31 @@
   .wander-mist,.wander-orbit,.wander-grain,.wander-landing h2,.wander-landing .eyebrow:first-child{animation:none!important}
   .path-card,.wander-world-top{transition:none!important}
 }
+
+
+/* V0.4.5 — teleport transitions: the world pulls the encounter away and snaps into the next one. */
+#wanderView .wander-world{transform-origin:50% 50%;}
+.wander-world.wander-teleport .wander-atmosphere{animation:wanderTeleportField 360ms cubic-bezier(.15,.9,.2,1) both!important;}
+.wander-world.wander-teleport .wander-immersion{animation:wanderTeleportSuck 360ms cubic-bezier(.12,.86,.2,1) both!important;}
+.wander-world.wander-teleport .wander-world-top{opacity:0!important;transform:scale(.94);filter:blur(8px);}
+.wander-world.wander-teleport-arrive .wander-immersion{animation:wanderTeleportArrive 520ms cubic-bezier(.18,.8,.2,1) both;}
+@keyframes wanderTeleportSuck{
+  0%{opacity:1;transform:scale(1);filter:blur(0)}
+  45%{opacity:.82;transform:scale(1.035);filter:blur(2px)}
+  100%{opacity:0;transform:scale(1.24);filter:blur(16px)}
+}
+@keyframes wanderTeleportField{
+  0%{transform:scale(1);filter:blur(0);opacity:.8}
+  100%{transform:scale(1.28);filter:blur(18px);opacity:0}
+}
+@keyframes wanderTeleportArrive{
+  0%{opacity:0;transform:scale(.88);filter:blur(16px)}
+  55%{opacity:.9;transform:scale(1.018);filter:blur(2px)}
+  100%{opacity:1;transform:scale(1);filter:blur(0)}
+}
+/* Inside the world, there is no redundant back-to-WANDER control. */
+#wanderView .wander-world-inside .wander-world-top .back,
+#wanderView .wander-world.wander-inside .wander-world-top .back{display:none;}
+@media(prefers-reduced-motion:reduce){
+  .wander-world.wander-teleport .wander-atmosphere,.wander-world.wander-teleport .wander-immersion,.wander-world.wander-teleport-arrive .wander-immersion{animation:none!important}
+}
