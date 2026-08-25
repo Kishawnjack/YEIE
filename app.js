@@ -611,6 +611,7 @@ function showWanderTrail(){
 }
 
 document.querySelectorAll("[data-wander-category]").forEach(btn=>btn.onclick=()=>enterWander(btn.dataset.wanderCategory));
+setupWanderActionDiscovery();
 $("wanderNextBtn").onclick=advanceWander;
 $("wanderKeepBtn").onclick=keepWanderItem;
 $("wanderBackBtn").onclick=leaveWanderWorld;
