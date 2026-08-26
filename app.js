@@ -9,7 +9,10 @@ try{
   state.trails ??=[];
 }catch{state={entries:[],ideas:[],trails:[]}}
 
-const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+const save=()=>{
+  try{ localStorage.setItem(KEY,JSON.stringify(state)); return true; }
+  catch(err){ console.warn("YEIE could not save locally",err); return false; }
+};
 // V0.5 migration: preserve any pre-trail Found items inside the first trail.
 if(Array.isArray(state.ideas) && state.ideas.length && Array.isArray(state.trails) && !state.trails.length){
   const first={id:"legacy-trail",startedAt:state.ideas[0].createdAt||new Date().toISOString(),endsAt:new Date(Date.now()+30*86400000).toISOString(),nodes:[],title:"Trail 1"};
@@ -23,11 +26,15 @@ const isLocked=e=>Date.now()-new Date(e.createdAt).getTime()>=LOCK_HOURS*3600000
 
 let currentView="homeView";
 let pageTravelTimer=null;
+let activeTrailId=null;
+let wanderSession=0;
+let wanderCurrentStopId=null;
 function showView(id,travel=true){
   const from=currentView;
   const majorViews=new Set(["homeView","journalView","wanderView","ideasView"]);
   const needsPortal=travel && from!==id && majorViews.has(from) && majorViews.has(id);
   const commit=()=>{
+    if(from==="wanderView" && id!=="wanderView") leaveWanderWorld();
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
     $(id).classList.add("active");
     document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===id));
@@ -83,6 +90,23 @@ function renderJournal(){
 
   b.querySelectorAll("[data-open]").forEach(x=>x.onclick=()=>openEntry(x.dataset.open));
 }
+function renderFound(preferredId=null){
+  const trails=Array.isArray(state.trails)?state.trails:[];
+  const total=trails.reduce((n,t)=>n+(t.nodes?.length||0),0);
+  $("trailCount").textContent=`${trails.length} TRAIL${trails.length===1?"":"S"}`;
+  $("foundCount").textContent=`${total} FOUND`;
+  const switcher=$("trailSwitcher"), map=$("trailMap"), empty=$("foundEmpty");
+  if(!trails.length || !total){
+    switcher.innerHTML=""; map.innerHTML=""; map.classList.add("hidden"); empty.classList.remove("hidden"); return;
+  }
+  map.classList.remove("hidden"); empty.classList.add("hidden");
+  const requested=preferredId || activeTrailId;
+  const active=trails.find(t=>t.id===requested) || currentTrail() || trails[trails.length-1];
+  activeTrailId=active.id;
+  switcher.innerHTML=trails.slice().reverse().map(t=>`<button class="trail-chip ${t.id===active.id?"active":""}" data-trail="${esc(t.id)}">${esc(t.title)} <span>${t.nodes?.length||0}</span></button>`).join("");
+  switcher.querySelectorAll("[data-trail]").forEach(btn=>btn.onclick=()=>{activeTrailId=btn.dataset.trail; renderFound(activeTrailId);});
+  renderTrail(active.id);
+}
 function trailIdForDate(date=new Date()){
   const y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,"0"), d=String(date.getDate()).padStart(2,"0");
   return `${y}-${m}-${d}`;
@@ -108,36 +132,40 @@ function recordTrailNode(item,action="encounter"){
   const trail=ensureTrail();
   const itemId=item.id;
   if(action==="keep"){
-    const candidates=trail.nodes.filter(n=>(n.itemId||n.id)===itemId);
-    const n=candidates[candidates.length-1];
-    if(n)n.action="keep";
-    else trail.nodes.push({id:crypto.randomUUID(),itemId,title:item.title,content:item.content,category:item.category,type:item.type,creator:item.creator,sourceLabel:item.sourceLabel,sourceUrl:item.sourceUrl,action:"keep",createdAt:nowISO()});
-  }else{
-    // Every encounter is a real step on the trail, including repeats.
-    trail.nodes.push({id:crypto.randomUUID(),itemId,title:item.title,content:item.content,category:item.category,type:item.type,creator:item.creator,sourceLabel:item.sourceLabel,sourceUrl:item.sourceUrl,action:"encounter",createdAt:nowISO()});
+    const stopId=wanderCurrentStopId;
+    const n=stopId ? trail.nodes.find(x=>x.id===stopId) : null;
+    if(n) n.action="keep";
+    save();
+    return n?.id || null;
   }
+  const node={id:crypto.randomUUID(),itemId,title:item.title,content:item.content,category:item.category,type:item.type,creator:item.creator,sourceLabel:item.sourceLabel,sourceUrl:item.sourceUrl,action:"encounter",createdAt:nowISO()};
+  trail.nodes.push(node);
   save();
+  return node.id;
 }
 function trailCategory(cat){
   return String(cat||"unsure").toLowerCase();
 }
 function trailPoints(nodes){
   if(!nodes.length)return [];
-  const cols=Math.min(8,Math.max(1,Math.ceil(Math.sqrt(nodes.length*1.65))));
+  const cols=Math.min(7,Math.max(1,Math.ceil(Math.sqrt(nodes.length*1.45))));
   const rows=Math.ceil(nodes.length/cols);
-  const left=9,right=91,top=16,bottom=86;
+  const left=10,right=90,top=17,bottom=84;
   const points=[];
   for(let i=0;i<nodes.length;i++){
     const row=Math.floor(i/cols), slot=i%cols;
+    const rowCount=Math.min(cols,nodes.length-row*cols);
     const reverse=row%2===1;
-    const logical=reverse?(cols-1-slot):slot;
-    const usable=Math.max(1,Math.min(cols,nodes.length-row*cols)-1);
-    const x=left+(logical/usable)*(right-left);
-    const y=top+(row/Math.max(1,rows-1))*(bottom-top);
+    const logical=reverse?(rowCount-1-slot):slot;
+    const rowSpan=Math.max(1,rowCount-1);
+    const baseX=left+(logical/rowSpan)*(right-left);
+    const baseY=top+(row/Math.max(1,rows-1))*(bottom-top);
     const cat=trailCategory(nodes[i].category);
-    // Small category drift keeps related discoveries visually near one another without breaking chronology.
-    const lane={sound:-3,words:1,film:3,visuals:-1,thoughts:2,unsure:0}[cat]||0;
-    points.push({x:Number((x + Math.sin(i*.9)*1.2).toFixed(2)),y:Number((y + lane).toFixed(2))});
+    const lane={sound:-2.2,words:1.4,film:2.6,visuals:-1.1,thoughts:2.1,unsure:0}[cat]||0;
+    const sway=Math.sin(i*1.37)*2.4 + Math.sin(i*.43)*1.2;
+    const x=Math.max(7,Math.min(93,baseX + (row%2 ? -sway : sway)));
+    const y=Math.max(12,Math.min(89,baseY + lane + Math.cos(i*.91)*1.7));
+    points.push({x:Number(x.toFixed(2)),y:Number(y.toFixed(2))});
   }
   return points;
 }
@@ -177,15 +205,7 @@ function renderTrail(id){
   </svg>`;
   const startMarkup=markerStart?`<div class="trail-terminal trail-start" style="left:${markerStart.x}%;top:${markerStart.y}%"><span>START</span></div>`:"";
   const endMarkup=markerEnd?`<div class="trail-terminal trail-end" style="left:${markerEnd.x}%;top:${markerEnd.y}%"><span>NOW</span></div>`:"";
-  const legend=`<div class="trail-map-legend">
-    <span><i class="legend-dot keep-dot"></i> KEEP</span>
-    <span><i class="legend-dot sound-dot"></i> SOUND</span>
-    <span><i class="legend-dot words-dot"></i> WORDS</span>
-    <span><i class="legend-dot film-dot"></i> FILM</span>
-    <span><i class="legend-dot visuals-dot"></i> VISUALS</span>
-    <span><i class="legend-dot thoughts-dot"></i> THOUGHTS</span>
-    <span><i class="legend-dot unsure-dot"></i> I'M NOT SURE</span>
-  </div>`;
+  const legend=`<div class="trail-map-legend"><span><i class="legend-dot keep-dot"></i> KEEP = A PLACE YOU STOPPED</span></div>`;
   map.innerHTML=`<div class="trail-map-title"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div>${svg}${startMarkup}${endMarkup}${legend}`+
     nodes.map((n,i)=>{
       const keep=n.action==="keep";
@@ -698,7 +718,8 @@ function setWanderLoading(isLoading){
 
 async function enterWander(category){
   if(wanderLoading)return;
-  wanderCategory=category; wanderTrail=[];
+  const session=++wanderSession;
+  wanderCategory=category; wanderTrail=[]; wanderCurrentStopId=null;
   ensureTrail();
   wanderLoading=true;
   $("wanderKeepBtn").disabled=true;
@@ -715,14 +736,16 @@ async function enterWander(category){
     await new Promise(r=>setTimeout(r,260));
     world.classList.remove("wander-opening");
     world.classList.add("wander-inside","wander-teleport");
-    wanderCurrent=await nextPromise;
+    const found=await nextPromise;
+    if(session!==wanderSession || currentView!=="wanderView") return;
+    wanderCurrent=found;
     renderWanderItem(wanderCurrent);
     await new Promise(r=>setTimeout(r,100));
     world.classList.remove("wander-teleport");
     finishWanderTeleport();
     resetWanderControls();
     wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"encounter",at:nowISO()});
-    recordTrailNode(wanderCurrent,"encounter");
+    wanderCurrentStopId=recordTrailNode(wanderCurrent,"encounter");
     rememberWanderItem(wanderCurrent);
   }finally{
     setWanderLoading(false);
@@ -731,6 +754,7 @@ async function enterWander(category){
 
 async function advanceWander(){
   if(!wanderCategory||wanderLoading)return;
+  const session=wanderSession;
   wanderLoading=true;
   $("wanderKeepBtn").disabled=true;
   $("wanderNextBtn").disabled=true;
@@ -743,18 +767,16 @@ async function advanceWander(){
     world.classList.add("wander-teleport");
     const nextPromise=scoutNext(wanderCategory);
     await new Promise(r=>setTimeout(r,360));
-    wanderCurrent=await nextPromise;
-    if(wanderCurrent.category!==wanderCategory && wanderCategory!=="unsure"){
-      // The doorway remains the user's chosen direction; the content may cross mediums.
-      $("wanderCategory").textContent=wanderCategory.toUpperCase();
-    }
+    const found=await nextPromise;
+    if(session!==wanderSession || currentView!=="wanderView") return;
+    wanderCurrent=found;
+    if(wanderCurrent.category!==wanderCategory && wanderCategory!=="unsure") $("wanderCategory").textContent=wanderCategory.toUpperCase();
     wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"wander",at:nowISO()});
-    recordTrailNode(wanderCurrent,"wander");
+    wanderCurrentStopId=recordTrailNode(wanderCurrent,"encounter");
     rememberWanderItem(wanderCurrent);
     renderWanderItem(wanderCurrent);
     finishWanderTeleport();
-    if(!previousItem) resetWanderControls();
-    else resetWanderControls();
+    resetWanderControls();
   }finally{
     setWanderLoading(false);
   }
@@ -770,22 +792,25 @@ function keepWanderItem(){
       creator:wanderCurrent.creator,sourceLabel:wanderCurrent.sourceLabel,
       sourceUrl:wanderCurrent.sourceUrl,createdAt:nowISO(),origin:"wander"
     });
-    save();
-    renderFound();
   }
-  wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"keep",at:nowISO()});
   recordTrailNode(wanderCurrent,"keep");
+  save();
+  wanderTrail.push({category:wanderCurrent.category,item:wanderCurrent,action:"keep",at:nowISO()});
   advanceWander();
 }
 
 function leaveWanderWorld(){
-  if(wanderLoading)return;
+  ++wanderSession;
   if(wanderControlsTimer) clearTimeout(wanderControlsTimer);
-  wanderCategory=null; wanderCurrent=null; wanderTrail=[];
+  wanderLoading=false;
+  wanderCategory=null; wanderCurrent=null; wanderTrail=[]; wanderCurrentStopId=null;
   const world=$("wanderWorld");
-  world.classList.remove("wander-inside","wander-opening");
+  world.classList.remove("wander-inside","wander-opening","wander-teleport","wander-teleport-arrive");
   $("wanderImmersion").classList.add("hidden");
   $("wanderLanding").classList.remove("hidden");
+  $("wanderKeepBtn").disabled=false; $("wanderNextBtn").disabled=false;
+  $("wanderActions").classList.remove("wander-controls-ready","wander-controls-reveal");
+  $("wanderActions").classList.add("wander-actions-hidden");
 }
 
 function showWanderTrail(){
@@ -850,7 +875,7 @@ document.querySelectorAll(".nav-btn").forEach(b=>{
     const view=b.dataset.view;
     if(!view || !document.getElementById(view)) return;
     if(view==="journalView") renderJournal();
-    if(view==="ideasView") renderFound();
+    if(view==="ideasView"){ renderFound(); $("trailDetail").classList.add("hidden"); }
     showView(view);
   });
 });
@@ -891,3 +916,9 @@ renderFound();
 showView("homeView",false);
 document.documentElement.dataset.yeieReady="true";
 handleDraftOnReturn();
+
+
+// V0.6.1 — keep the app shell fresh without caching Scout/network discoveries.
+if("serviceWorker" in navigator && location.protocol !== "file:"){
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+}

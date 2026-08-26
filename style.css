@@ -480,8 +480,6 @@ body[data-view="wanderView"] .nav-btn.active{color:#fff}
 @media(min-width:700px){
   .nav{position:fixed;left:50%;right:auto;bottom:18px;transform:translateX(-50%);margin:0;z-index:80;width:max-content;border:1px solid rgba(255,255,255,.09);border-radius:999px;background:rgba(12,12,12,.45);backdrop-filter:blur(14px)}
 }
-\n\n/* V0.5.3 — HOME IS A THRESHOLD / NAVIGATION LIVES IN EVERY WORLD */\n.home-gateway{min-height:calc(100vh - 40px);padding-bottom:120px;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;overflow:hidden}\n.home-logo-stage{position:relative;z-index:3;margin:auto 0;transform:translateY(-3vh)}\n.home-scroll-space{display:none}\n.home-choices{display:none!important}\n\n/* The world navigation is always available. On Wander it remains quiet, but never disappears. */\n.app>.nav{position:fixed!important;left:50%!important;right:auto!important;bottom:18px!important;transform:translateX(-50%)!important;z-index:100!important;width:max-content!important;min-width:250px;padding:8px 14px calc(8px + env(safe-area-inset-bottom))!important;margin:0!important;border:1px solid rgba(255,255,255,.09)!important;border-radius:999px!important;background:rgba(8,8,13,.34)!important;backdrop-filter:blur(18px)!important;opacity:.62;transition:opacity .45s ease,transform .45s ease,background .45s ease,box-shadow .45s ease!important;box-shadow:0 12px 60px rgba(0,0,0,.22)!important}\n.app>.nav:hover,.app>.nav:focus-within{opacity:.96;transform:translateX(-50%) translateY(-3px)!important;background:rgba(8,8,13,.68)!important;box-shadow:0 18px 70px rgba(0,0,0,.35)!important}\n.app>.nav .nav-btn{color:#999}\n.app>.nav .nav-btn.active{color:#fff}\nbody[data-view="wanderView"] .app>.nav{opacity:.42}\nbody[data-view="wanderView"] .app>.nav:hover,body[data-view="wanderView"] .app>.nav:focus-within{opacity:.96}\nbody.page-traveling .app>.nav{opacity:0!important;pointer-events:none}\n\n@media(max-width:700px){\n  .home-gateway{min-height:calc(100vh - 20px);padding-bottom:110px}\n  .home-logo-stage{transform:translateY(-5vh) scale(.92)}\n  .app>.nav{bottom:12px!important;min-width:0!important;width:calc(100% - 28px)!important;justify-content:space-around!important;gap:0!important}\n}\n
-
 /* V0.5.4 — navigation hardening */
 .app>.nav{pointer-events:auto!important;touch-action:manipulation!important;}
 .app>.nav .nav-btn{pointer-events:auto!important;position:relative;z-index:101!important;}
@@ -530,4 +528,37 @@ body[data-view="wanderView"] .app>.nav .nav-btn{z-index:10002!important;pointer-
   .trail-map-legend{max-width:90%;font-size:7px}
   .trail-node{width:18px;height:18px}.trail-node.is-keep{width:40px;height:40px}
   .trail-node-pop{width:170px}
+}
+
+
+/* V0.6.1 — clean shell/navigation layering */
+.home-gateway{min-height:calc(100vh - 40px);padding-bottom:120px;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;overflow:hidden}
+.home-logo-stage{position:relative;z-index:3;margin:auto 0;transform:translateY(-3vh)}
+.home-scroll-space,.home-choices{display:none!important}
+.app>.nav{position:fixed!important;left:50%!important;right:auto!important;bottom:18px!important;transform:translateX(-50%)!important;z-index:10001!important;width:max-content!important;min-width:250px;padding:8px 14px calc(8px + env(safe-area-inset-bottom))!important;margin:0!important;border:1px solid rgba(255,255,255,.09)!important;border-radius:999px!important;background:rgba(8,8,13,.34)!important;backdrop-filter:blur(18px)!important;opacity:.62;transition:opacity .45s ease,transform .45s ease,background .45s ease,box-shadow .45s ease!important;box-shadow:0 12px 60px rgba(0,0,0,.22)!important;pointer-events:auto!important;touch-action:manipulation!important}
+.app>.nav .nav-btn{pointer-events:auto!important;position:relative;z-index:10002!important}
+.app>.nav:hover,.app>.nav:focus-within{opacity:.96;transform:translateX(-50%) translateY(-3px)!important;background:rgba(8,8,13,.68)!important;box-shadow:0 18px 70px rgba(0,0,0,.35)!important}
+body[data-view="wanderView"] .app>.nav{opacity:.42}
+body[data-view="wanderView"] .app>.nav:hover,body[data-view="wanderView"] .app>.nav:focus-within{opacity:.96}
+body.page-traveling .app>.nav{opacity:0!important;pointer-events:none!important}
+
+/* Keep the interaction layer above global chrome only while it is actually active. */
+#draftModal,#keepModal,#privacyModal{z-index:11000}
+.trail-detail{z-index:10500}
+.wander-actions{position:relative;z-index:10010}
+
+/* V0.6.1 — a path that wanders instead of behaving like infrastructure */
+.trail-route-line{stroke-linecap:round;stroke-linejoin:round;stroke-width:1.25;stroke-dasharray:none;opacity:.78}
+.trail-route-shadow{stroke-width:3;opacity:.42}
+.trail-map{overflow:hidden}
+.trail-map-legend{right:18px;top:18px;max-width:none;font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.42)}
+.trail-map-legend span{padding:5px 8px;border:1px solid rgba(255,255,255,.08);border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(8px)}
+.trail-node.is-keep{width:46px;height:46px;box-shadow:0 0 0 6px rgba(255,214,75,.08),0 0 42px rgba(255,201,61,.38)}
+.trail-node.is-keep::after{inset:-7px}
+@media(max-width:700px){
+  .home-gateway{min-height:calc(100vh - 20px);padding-bottom:110px}
+  .home-logo-stage{transform:translateY(-5vh) scale(.92)}
+  .app>.nav{bottom:12px!important;min-width:0!important;width:calc(100% - 28px)!important;justify-content:space-around!important;gap:0!important}
+  .trail-map-legend{left:18px;right:auto;top:18px}
+  .trail-node.is-keep{width:40px;height:40px}
 }
