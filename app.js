@@ -184,8 +184,20 @@ function smoothTrailPath(points){
   }
   return d;
 }
+function trailPalette(trail,index){
+  const palettes=[
+    {name:"clay",ink:"#d8c3a5",earth:"#7f6650",accent:"#b8875a",keep:"#e8c78d",path:"#9a8065",bg:"#171513"},
+    {name:"moss",ink:"#c7c6a8",earth:"#59634d",accent:"#87966a",keep:"#d8c98d",path:"#69745a",bg:"#151713"},
+    {name:"river",ink:"#b8c3c2",earth:"#536a6b",accent:"#789293",keep:"#d5c6a0",path:"#617b7b",bg:"#141718"},
+    {name:"ochre",ink:"#d3b98f",earth:"#765d42",accent:"#aa8051",keep:"#e0c48c",path:"#8b6b4d",bg:"#181513"},
+    {name:"dust",ink:"#c8b8ad",earth:"#6e5d55",accent:"#987a6c",keep:"#dbc19f",path:"#7c675e",bg:"#171514"}
+  ];
+  return palettes[(Math.max(0,index)+palettes.length)%palettes.length];
+}
 function renderTrail(id){
   const trail=state.trails.find(t=>t.id===id); if(!trail)return;
+  const trailIndex=state.trails.findIndex(t=>t.id===id);
+  const palette=trailPalette(trail,trailIndex);
   const map=$("trailMap"), nodes=trail.nodes||[], points=trailPoints(nodes);
   // Backfill metadata for trails created before V0.6.
   nodes.forEach(n=>{n.itemId ??=n.id; n.createdAt ??=trail.startedAt;});
@@ -205,8 +217,15 @@ function renderTrail(id){
   </svg>`;
   const startMarkup=markerStart?`<div class="trail-terminal trail-start" style="left:${markerStart.x}%;top:${markerStart.y}%"><span>START</span></div>`:"";
   const endMarkup=markerEnd?`<div class="trail-terminal trail-end" style="left:${markerEnd.x}%;top:${markerEnd.y}%"><span>NOW</span></div>`:"";
-  const legend=`<div class="trail-map-legend"><span><i class="legend-dot keep-dot"></i> KEEP = A PLACE YOU STOPPED</span></div>`;
-  map.innerHTML=`<div class="trail-map-title"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div>${svg}${startMarkup}${endMarkup}${legend}`+
+  map.dataset.palette=palette.name;
+  map.style.setProperty("--trail-ink",palette.ink);
+  map.style.setProperty("--trail-earth",palette.earth);
+  map.style.setProperty("--trail-accent",palette.accent);
+  map.style.setProperty("--trail-keep",palette.keep);
+  map.style.setProperty("--trail-path",palette.path);
+  map.style.setProperty("--trail-bg",palette.bg);
+  const footprints=points.slice(0,-1).map((p,i)=>`<span class="trail-footstep" style="left:${p.x}%;top:${p.y}%" aria-hidden="true"></span>`).join("");
+  map.innerHTML=`<div class="trail-map-title"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div>${svg}${startMarkup}${endMarkup}${footprints}`+
     nodes.map((n,i)=>{
       const keep=n.action==="keep";
       const cat=trailCategory(n.category);
