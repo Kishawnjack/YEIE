@@ -614,3 +614,69 @@ body.page-traveling .app>.nav{opacity:0!important;pointer-events:none!important}
   .trail-map{height:72vh!important;min-height:400px!important}
   .trail-node.is-keep{width:40px!important;height:40px!important}
 }
+
+/* V0.6.3 — THE PATH
+   Found is a physical trace of where you went, not a constellation or game board. */
+html{scroll-behavior:auto!important;overflow-anchor:none}
+body{overflow-x:hidden}
+
+/* Always arrive at the beginning of a destination. */
+.view.active{scroll-margin-top:0}
+.found-screen,.journal-screen{scroll-margin-top:0}
+
+/* The map becomes an imperfect physical trail. */
+.trail-map-wrap{background:var(--trail-bg,#141313)!important;border-color:rgba(220,190,150,.13)!important}
+.trail-map{background:
+  radial-gradient(ellipse at 18% 18%,rgba(255,220,170,.035),transparent 24%),
+  radial-gradient(ellipse at 82% 76%,rgba(100,140,110,.035),transparent 26%),
+  linear-gradient(180deg,rgba(255,255,255,.012),transparent 35%),
+  var(--trail-bg,#141313)!important}
+.trail-route-shadow{stroke:rgba(30,22,16,.82)!important;stroke-width:4.8!important;filter:blur(2.4px)!important}
+.trail-route-line{stroke:var(--trail-path,#9a8065)!important;stroke-width:1.45!important;opacity:.72!important;filter:none!important;stroke-dasharray:none!important;animation:none!important}
+.trail-route-line.segment-mixed{stroke:var(--trail-accent,#b8875a)!important;opacity:.5!important}
+
+/* No stars, no numbers, no achievement markers. */
+.trail-node{width:17px!important;height:17px!important;border-radius:47% 53% 51% 49%!important;border:1px solid rgba(235,216,188,.4)!important;background:var(--trail-earth,#806b55)!important;box-shadow:0 3px 10px rgba(0,0,0,.38),inset 1px 1px 2px rgba(255,245,225,.18)!important;color:transparent!important}
+.trail-node:nth-child(3n){border-radius:53% 47% 45% 55%!important}
+.trail-node:nth-child(4n){border-radius:44% 56% 54% 46%!important}
+.trail-node-mark{display:block;width:5px;height:5px;border-radius:50%;background:rgba(255,241,218,.44);box-shadow:0 1px 2px rgba(0,0,0,.45)}
+.trail-node.is-keep{width:33px!important;height:33px!important;border-radius:50%!important;background:var(--trail-keep,#d8b879)!important;border-color:rgba(255,232,190,.72)!important;box-shadow:0 4px 15px rgba(0,0,0,.46),0 0 0 5px rgba(215,175,110,.09)!important}
+.trail-node.is-keep .trail-node-mark{width:7px;height:7px;background:rgba(255,250,238,.76)}
+.trail-node::after{display:none!important}
+.trail-node:hover,.trail-node:focus-visible{transform:translate(-50%,-50%) scale(1.55)!important;filter:brightness(1.12)!important}
+.trail-node.is-keep:hover,.trail-node.is-keep:focus-visible{transform:translate(-50%,-50%) scale(1.18)!important}
+.trail-node-number{display:none!important}
+
+/* Actual paired footprints along the route — quiet traces, not icons. */
+.trail-footstep{position:absolute;z-index:4;width:18px;height:14px;transform:translate(-50%,-50%) rotate(var(--step-rotation,0deg));pointer-events:none;opacity:.34}
+.trail-footstep i{position:absolute;display:block;width:4px;height:8px;border-radius:58% 58% 48% 48%;background:rgba(198,166,124,.48);box-shadow:0 1px 1px rgba(0,0,0,.3)}
+.trail-footstep i:first-child{left:1px;top:1px;transform:rotate(-8deg)}
+.trail-footstep i:last-child{right:1px;bottom:0;transform:rotate(8deg)}
+.trail-footstep i::after{content:"";position:absolute;left:1px;bottom:-2px;width:2px;height:3px;border-radius:50%;background:rgba(198,166,124,.28)}
+.trail-footstep:nth-of-type(2n){opacity:.25;transform:translate(-50%,-50%) rotate(calc(var(--step-rotation,0deg) + 7deg)) translateY(2px)}
+.trail-footstep:nth-of-type(3n){opacity:.18}
+
+/* Trail palette: each chapter gets an atmosphere, not a category key. */
+.trail-map[data-palette="clay"]{--trail-bg:#171311;--trail-earth:#8b684c;--trail-path:#a77c59;--trail-ink:#e3c5a3;--trail-accent:#c28a5c;--trail-keep:#e3b66f}
+.trail-map[data-palette="moss"]{--trail-bg:#121713;--trail-earth:#61755b;--trail-path:#7e936c;--trail-ink:#d0d5b7;--trail-accent:#9eaf73;--trail-keep:#d9c77e}
+.trail-map[data-palette="river"]{--trail-bg:#111619;--trail-earth:#58757a;--trail-path:#6d9499;--trail-ink:#c5d7d7;--trail-accent:#86aeb1;--trail-keep:#d5c48e}
+.trail-map[data-palette="ochre"]{--trail-bg:#18130e;--trail-earth:#8a633b;--trail-path:#b1814b;--trail-ink:#e1c49a;--trail-accent:#c6924e;--trail-keep:#e1b866}
+.trail-map[data-palette="dust"]{--trail-bg:#171416;--trail-earth:#76616a;--trail-path:#967582;--trail-ink:#d4c0c5;--trail-accent:#b18a9a;--trail-keep:#dfbf99}
+
+/* V0.6.3 gives the destination visual priority immediately after navigation. */
+.found-screen{min-height:calc(100vh - 76px)!important;padding-top:0!important}
+.found-head{padding:4px 0 6px!important}
+.trail-switcher{padding:4px 0 5px!important}
+.trail-map-wrap{margin-top:2px!important}
+.journal-screen{min-height:calc(100vh - 76px)!important;padding-top:0!important}
+.journal-head{padding:4px 0 16px!important}
+
+/* Keep the shell from contributing a giant blank region above the destination. */
+body[data-view="journalView"] .topbar,
+body[data-view="ideasView"] .topbar{margin-bottom:12px}
+
+@media(max-width:700px){
+  .trail-map{height:74vh!important;min-height:420px!important}
+  .trail-node{width:15px!important;height:15px!important}
+  .trail-node.is-keep{width:30px!important;height:30px!important}
+}

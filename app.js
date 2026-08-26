@@ -25,6 +25,8 @@ const formatDate=iso=>new Date(iso).toLocaleString([],{month:"short",day:"numeri
 const isLocked=e=>Date.now()-new Date(e.createdAt).getTime()>=LOCK_HOURS*3600000;
 
 let currentView="homeView";
+// V0.6.3 — never restore an old browser scroll position when entering YEIE.
+if("scrollRestoration" in history) history.scrollRestoration="manual";
 let pageTravelTimer=null;
 let activeTrailId=null;
 let wanderSession=0;
@@ -40,7 +42,7 @@ function showView(id,travel=true){
     document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===id));
     currentView=id;
     document.body.dataset.view=id;
-    scrollTo(0,0);
+    window.scrollTo({top:0,left:0,behavior:"instant"});
   };
   if(!needsPortal){commit();return;}
   const portal=$("pagePortal");
@@ -224,14 +226,14 @@ function renderTrail(id){
   map.style.setProperty("--trail-keep",palette.keep);
   map.style.setProperty("--trail-path",palette.path);
   map.style.setProperty("--trail-bg",palette.bg);
-  const footprints=points.slice(0,-1).map((p,i)=>`<span class="trail-footstep" style="left:${p.x}%;top:${p.y}%" aria-hidden="true"></span>`).join("");
+  const footprints=points.slice(0,-1).map((p,i)=>`<span class="trail-footstep" style="left:${p.x}%;top:${p.y}%;--step-rotation:${(i%2?-9:9)+(i%3-1)*2}deg" aria-hidden="true"><i></i><i></i></span>`).join("");
   map.innerHTML=`<div class="trail-map-title"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div>${svg}${startMarkup}${endMarkup}${footprints}`+
     nodes.map((n,i)=>{
       const keep=n.action==="keep";
       const cat=trailCategory(n.category);
       const p=points[i]||{x:50,y:50};
       const sequence=i+1;
-      return `<button class="trail-node node-${esc(cat)} ${keep?"is-keep":"is-wander"}" style="left:${p.x}%;top:${p.y}%" data-node="${esc(n.id)}" aria-label="Stop ${sequence}: ${esc(n.title)}">${keep?"★":""}<span class="trail-node-number">${sequence}</span><span class="trail-node-pop">${nodePreview(n)}<small class="trail-node-action">${keep?"KEPT":"WANDERED"}</small></span></button>`;
+      return `<button class="trail-node node-${esc(cat)} ${keep?"is-keep":"is-wander"}" style="left:${p.x}%;top:${p.y}%" data-node="${esc(n.id)}" aria-label="Stop ${sequence}: ${esc(n.title)}"><span class="trail-node-mark" aria-hidden="true"></span><span class="trail-node-pop">${nodePreview(n)}<small class="trail-node-action">${keep?"KEPT":"WANDERED"}</small></span></button>`;
     }).join("");
   map.querySelectorAll("[data-node]").forEach(btn=>btn.onclick=()=>openTrailNode(btn.dataset.node,trail.id));
 }
@@ -932,7 +934,9 @@ window.addEventListener("scroll",()=>{
 
 renderJournal();
 renderFound();
+window.scrollTo({top:0,left:0,behavior:"instant"});
 showView("homeView",false);
+requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"instant"}));
 document.documentElement.dataset.yeieReady="true";
 handleDraftOnReturn();
 
