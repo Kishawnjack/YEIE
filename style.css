@@ -491,3 +491,43 @@ body[data-view="wanderView"] .nav-btn.active{color:#fff}
 /* V0.5.5 — WANDER NAV ABOVE FULLSCREEN WORLD */
 body[data-view="wanderView"] .app>.nav{z-index:10001!important;pointer-events:auto!important;}
 body[data-view="wanderView"] .app>.nav .nav-btn{z-index:10002!important;pointer-events:auto!important;}
+
+/* V0.6 — FOUND / TRAILS 2.0: a readable creative road map */
+.trail-map-wrap{position:relative}
+.trail-map{background:
+  linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px),
+  radial-gradient(circle at 15% 20%,rgba(75,140,255,.14),transparent 25%),
+  radial-gradient(circle at 82% 72%,rgba(255,90,180,.12),transparent 28%),
+  radial-gradient(circle at 50% 45%,rgba(255,214,74,.07),transparent 30%),#0d0e13;
+  background-size:48px 48px,48px 48px,auto,auto,auto;
+}
+.trail-map::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,.42) 100%);z-index:2}
+.trail-map-title{z-index:9}
+.trail-route{z-index:3}
+.trail-route-shadow{stroke:rgba(0,0,0,.82);stroke-width:3.4;filter:blur(2.5px)}
+.trail-route-line{fill:none;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;filter:url(#trailGlow);stroke-dasharray:2.4 1.5;animation:trailRoadMove 5.5s linear infinite}
+.trail-route-line.segment-sound{stroke:#4c8dff}.trail-route-line.segment-words{stroke:#ff63b1}.trail-route-line.segment-film{stroke:#e8ad27}.trail-route-line.segment-visuals{stroke:#55c77b}.trail-route-line.segment-thoughts{stroke:#9a70ff}.trail-route-line.segment-unsure{stroke:#c8c8c8}.trail-route-line.segment-mixed{stroke:url(#none);stroke:#d9d9d9;opacity:.68}
+.trail-route-beacon{fill:#fff;filter:drop-shadow(0 0 7px rgba(255,255,255,.7));animation:trailBeacon 1.8s ease-in-out infinite alternate}
+.trail-terminal{z-index:12}
+.trail-terminal::before{width:20px;height:20px;border-width:2px;background:#090a10;box-shadow:0 0 0 6px rgba(255,255,255,.05),0 0 32px rgba(255,255,255,.2)}
+.trail-terminal span{top:25px;font-size:9px;color:rgba(255,255,255,.68);font-weight:800;text-shadow:0 2px 8px #000}
+.trail-start::before{background:radial-gradient(circle,#fff 0 18%,#6da7ff 32%,#3155ff 66%,#07132f 74%);box-shadow:0 0 0 7px rgba(76,141,255,.1),0 0 38px rgba(76,141,255,.48)}
+.trail-end::before{width:25px;height:25px;background:radial-gradient(circle,#fff 0 14%,#7cffb1 30%,#2fbe72 62%,#07140d 72%);box-shadow:0 0 0 8px rgba(88,235,145,.1),0 0 38px rgba(88,235,145,.5)}
+.trail-end span{color:#8dffb8}
+.trail-node{z-index:10;display:grid;place-items:center;width:22px;height:22px;overflow:visible}
+.trail-node-number{font-size:7px;font-weight:800;color:rgba(255,255,255,.75);text-shadow:0 1px 5px #000;pointer-events:none}
+.trail-node.is-keep{width:48px;height:48px;font-size:19px;z-index:16}
+.trail-node.is-keep .trail-node-number{font-size:8px}
+.trail-node-pop{bottom:34px;width:215px;z-index:60}
+.trail-node-action{display:block;margin-top:7px;font-size:8px;letter-spacing:.14em;color:#999;text-transform:uppercase}
+.trail-node:hover,.trail-node:focus-visible{transform:translate(-50%,-50%) scale(1.72);filter:saturate(1.35) brightness(1.16)}
+.trail-node.is-keep:hover,.trail-node.is-keep:focus-visible{transform:translate(-50%,-50%) scale(1.22)}
+.trail-map-legend{z-index:12;max-width:70%;line-height:1.8}
+.legend-dot.thoughts-dot{background:#9a70ff;color:#9a70ff}.legend-dot.unsure-dot{background:#c8c8c8;color:#c8c8c8}
+@media(max-width:700px){
+  .trail-map{background-size:34px 34px,34px 34px,auto,auto,auto}
+  .trail-map-legend{max-width:90%;font-size:7px}
+  .trail-node{width:18px;height:18px}.trail-node.is-keep{width:40px;height:40px}
+  .trail-node-pop{width:170px}
+}

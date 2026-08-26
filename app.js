@@ -106,49 +106,51 @@ function nodePreview(item){
 }
 function recordTrailNode(item,action="encounter"){
   const trail=ensureTrail();
-  if(!trail.nodes.some(n=>n.id===item.id)){
-    trail.nodes.push({id:item.id,title:item.title,content:item.content,category:item.category,type:item.type,creator:item.creator,sourceLabel:item.sourceLabel,sourceUrl:item.sourceUrl,action,createdAt:nowISO()});
-  }else if(action==="keep"){
-    const n=trail.nodes.find(n=>n.id===item.id); if(n)n.action="keep";
+  const itemId=item.id;
+  if(action==="keep"){
+    const candidates=trail.nodes.filter(n=>(n.itemId||n.id)===itemId);
+    const n=candidates[candidates.length-1];
+    if(n)n.action="keep";
+    else trail.nodes.push({id:crypto.randomUUID(),itemId,title:item.title,content:item.content,category:item.category,type:item.type,creator:item.creator,sourceLabel:item.sourceLabel,sourceUrl:item.sourceUrl,action:"keep",createdAt:nowISO()});
+  }else{
+    // Every encounter is a real step on the trail, including repeats.
+    trail.nodes.push({id:crypto.randomUUID(),itemId,title:item.title,content:item.content,category:item.category,type:item.type,creator:item.creator,sourceLabel:item.sourceLabel,sourceUrl:item.sourceUrl,action:"encounter",createdAt:nowISO()});
   }
   save();
 }
-function renderFound(){
-  const trails=Array.isArray(state.trails)?state.trails:[];
-  const total=trails.reduce((n,t)=>n+(t.nodes?.length||0),0);
-  $("trailCount").textContent=`${trails.length} TRAIL${trails.length===1?"":"S"}`;
-  $("foundCount").textContent=`${total} FOUND`;
-  const switcher=$("trailSwitcher"), map=$("trailMap"), empty=$("foundEmpty");
-  if(!trails.length || !total){
-    switcher.innerHTML=""; map.innerHTML=""; map.classList.add("hidden"); empty.classList.remove("hidden"); return;
-  }
-  map.classList.remove("hidden"); empty.classList.add("hidden");
-  const active=currentTrail();
-  switcher.innerHTML=trails.slice().reverse().map(t=>`<button class="trail-chip ${t.id===active.id?"active":""}" data-trail="${esc(t.id)}">${esc(t.title)} <span>${t.nodes?.length||0}</span></button>`).join("");
-  switcher.querySelectorAll("[data-trail]").forEach(btn=>btn.onclick=()=>renderTrail(btn.dataset.trail));
-  renderTrail(active.id);
+function trailCategory(cat){
+  return String(cat||"unsure").toLowerCase();
 }
-function trailLayout(total){
-  if(!total)return [];
-  const cols=total<=8?total:(total<=14?7:8);
-  const rows=Math.ceil(total/cols);
+function trailPoints(nodes){
+  if(!nodes.length)return [];
+  const cols=Math.min(8,Math.max(1,Math.ceil(Math.sqrt(nodes.length*1.65))));
+  const rows=Math.ceil(nodes.length/cols);
+  const left=9,right=91,top=16,bottom=86;
   const points=[];
-  for(let i=0;i<total;i++){
-    const row=Math.floor(i/cols);
-    const slot=i%cols;
-    const direction=row%2===0?slot:(cols-1-slot);
-    const x=8+(direction/Math.max(1,cols-1))*84 + Math.sin(i*.72)*1.4;
-    const y=18+(row/Math.max(1,rows-1))*64 + Math.sin(i*1.17)*2.6;
-    points.push({x:Number(x.toFixed(2)),y:Number(y.toFixed(2))});
+  for(let i=0;i<nodes.length;i++){
+    const row=Math.floor(i/cols), slot=i%cols;
+    const reverse=row%2===1;
+    const logical=reverse?(cols-1-slot):slot;
+    const usable=Math.max(1,Math.min(cols,nodes.length-row*cols)-1);
+    const x=left+(logical/usable)*(right-left);
+    const y=top+(row/Math.max(1,rows-1))*(bottom-top);
+    const cat=trailCategory(nodes[i].category);
+    // Small category drift keeps related discoveries visually near one another without breaking chronology.
+    const lane={sound:-3,words:1,film:3,visuals:-1,thoughts:2,unsure:0}[cat]||0;
+    points.push({x:Number((x + Math.sin(i*.9)*1.2).toFixed(2)),y:Number((y + lane).toFixed(2))});
   }
   return points;
+}
+function trailSegmentClass(a,b){
+  const ca=trailCategory(a?.category), cb=trailCategory(b?.category);
+  return ca===cb ? `segment-${ca}` : "segment-mixed";
 }
 function smoothTrailPath(points){
   if(!points.length)return "";
   if(points.length===1)return `M ${points[0].x} ${points[0].y}`;
   let d=`M ${points[0].x} ${points[0].y}`;
   for(let i=0;i<points.length-1;i++){
-    const a=points[i], b=points[i+1];
+    const a=points[i],b=points[i+1];
     const midX=(a.x+b.x)/2, midY=(a.y+b.y)/2;
     d+=` Q ${midX} ${a.y} ${midX} ${midY} T ${b.x} ${b.y}`;
   }
@@ -156,20 +158,22 @@ function smoothTrailPath(points){
 }
 function renderTrail(id){
   const trail=state.trails.find(t=>t.id===id); if(!trail)return;
-  const map=$("trailMap"), nodes=trail.nodes||[], points=trailLayout(nodes.length);
-  const path=smoothTrailPath(points);
-  const markerStart=points[0], markerEnd=points[points.length-1];
+  const map=$("trailMap"), nodes=trail.nodes||[], points=trailPoints(nodes);
+  // Backfill metadata for trails created before V0.6.
+  nodes.forEach(n=>{n.itemId ??=n.id; n.createdAt ??=trail.startedAt;});
+  const routeParts=[];
+  for(let i=0;i<points.length-1;i++){
+    const d=smoothTrailPath([points[i],points[i+1]]);
+    routeParts.push(`<path class="trail-route-line ${trailSegmentClass(nodes[i],nodes[i+1])}" d="${d}"/>`);
+  }
+  const markerStart=points[0],markerEnd=points[points.length-1];
   const svg=`<svg class="trail-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
     <defs>
-      <linearGradient id="trailGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#65a8ff"/><stop offset="35%" stop-color="#ff67b6"/><stop offset="68%" stop-color="#ffd24d"/><stop offset="100%" stop-color="#62e58c"/>
-      </linearGradient>
       <filter id="trailGlow"><feGaussianBlur stdDeviation="1.1" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <marker id="trailArrow" markerWidth="4" markerHeight="4" refX="3.2" refY="2" orient="auto"><path d="M0,0 L4,2 L0,4 Z" fill="rgba(255,255,255,.62)"/></marker>
     </defs>
-    <path class="trail-route-shadow" d="${path}"/>
-    <path class="trail-route-line" d="${path}"/>
-    ${points.filter((_,i)=>i>0 && i<nodes.length-1 && i%4===0).map((p,i)=>`<circle class="trail-route-beacon" cx="${p.x}" cy="${p.y}" r=".55"/>`).join("")}
+    <path class="trail-route-shadow" d="${smoothTrailPath(points)}"/>
+    ${routeParts.join("")}
+    ${points.filter((_,i)=>i>0&&i<nodes.length-1&&i%3===0).map(p=>`<circle class="trail-route-beacon" cx="${p.x}" cy="${p.y}" r=".48"/>`).join("")}
   </svg>`;
   const startMarkup=markerStart?`<div class="trail-terminal trail-start" style="left:${markerStart.x}%;top:${markerStart.y}%"><span>START</span></div>`:"";
   const endMarkup=markerEnd?`<div class="trail-terminal trail-end" style="left:${markerEnd.x}%;top:${markerEnd.y}%"><span>NOW</span></div>`:"";
@@ -179,13 +183,16 @@ function renderTrail(id){
     <span><i class="legend-dot words-dot"></i> WORDS</span>
     <span><i class="legend-dot film-dot"></i> FILM</span>
     <span><i class="legend-dot visuals-dot"></i> VISUALS</span>
+    <span><i class="legend-dot thoughts-dot"></i> THOUGHTS</span>
+    <span><i class="legend-dot unsure-dot"></i> I'M NOT SURE</span>
   </div>`;
   map.innerHTML=`<div class="trail-map-title"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div>${svg}${startMarkup}${endMarkup}${legend}`+
     nodes.map((n,i)=>{
       const keep=n.action==="keep";
-      const cat=String(n.category||"unsure").toLowerCase();
+      const cat=trailCategory(n.category);
       const p=points[i]||{x:50,y:50};
-      return `<button class="trail-node node-${esc(cat)} ${keep?"is-keep":"is-wander"}" style="left:${p.x}%;top:${p.y}%" data-node="${esc(n.id)}" aria-label="${esc(n.title)}">${keep?"★":""}<span class="trail-node-pop">${nodePreview(n)}</span></button>`;
+      const sequence=i+1;
+      return `<button class="trail-node node-${esc(cat)} ${keep?"is-keep":"is-wander"}" style="left:${p.x}%;top:${p.y}%" data-node="${esc(n.id)}" aria-label="Stop ${sequence}: ${esc(n.title)}">${keep?"★":""}<span class="trail-node-number">${sequence}</span><span class="trail-node-pop">${nodePreview(n)}<small class="trail-node-action">${keep?"KEPT":"WANDERED"}</small></span></button>`;
     }).join("");
   map.querySelectorAll("[data-node]").forEach(btn=>btn.onclick=()=>openTrailNode(btn.dataset.node,trail.id));
 }
@@ -194,10 +201,9 @@ function openTrailNode(nodeId,trailId){
   const trail=state.trails.find(t=>t.id===trailId), n=trail?.nodes.find(x=>x.id===nodeId); if(!n)return;
   const detail=$("trailDetail");
   detail.classList.remove("hidden");
-  detail.innerHTML=`<button id="closeTrailDetail" class="detail-close" type="button">×</button>${nodePreview(n)}<div class="detail-type">${esc(n.type||n.category||"DISCOVERY")}</div><p>${esc(n.content||"")}</p>${n.creator?`<div class="detail-creator">${esc(n.creator)}</div>`:""}${n.sourceUrl?`<a href="${esc(n.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="detail-source">DISCOVER THE SOURCE ↗</a>`:""}`;
+  detail.innerHTML=`<button id="closeTrailDetail" class="detail-close" type="button">×</button>${nodePreview(n)}<div class="detail-type">STOP ${trail.nodes.indexOf(n)+1} · ${esc(n.type||n.category||"DISCOVERY")}</div><p>${esc(n.content||"")}</p>${n.creator?`<div class="detail-creator">${esc(n.creator)}</div>`:""}${n.sourceUrl?`<a href="${esc(n.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="detail-source">DISCOVER THE SOURCE ↗</a>`:""}`;
   $("closeTrailDetail").onclick=()=>detail.classList.add("hidden");
 }
-
 function updateAutosaveStatus(){
   $("lockMessage").textContent="Autosaved · changes are being preserved";
 }
