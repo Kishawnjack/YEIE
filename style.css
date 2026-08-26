@@ -615,7 +615,7 @@ body.page-traveling .app>.nav{opacity:0!important;pointer-events:none!important}
   .trail-node.is-keep{width:40px!important;height:40px!important}
 }
 
-/* V0.6.3 — THE PATH
+/* V0.6.4 — THE PATH
    Found is a physical trace of where you went, not a constellation or game board. */
 html{scroll-behavior:auto!important;overflow-anchor:none}
 body{overflow-x:hidden}
@@ -663,7 +663,7 @@ body{overflow-x:hidden}
 .trail-map[data-palette="ochre"]{--trail-bg:#18130e;--trail-earth:#8a633b;--trail-path:#b1814b;--trail-ink:#e1c49a;--trail-accent:#c6924e;--trail-keep:#e1b866}
 .trail-map[data-palette="dust"]{--trail-bg:#171416;--trail-earth:#76616a;--trail-path:#967582;--trail-ink:#d4c0c5;--trail-accent:#b18a9a;--trail-keep:#dfbf99}
 
-/* V0.6.3 gives the destination visual priority immediately after navigation. */
+/* V0.6.4 gives the destination visual priority immediately after navigation. */
 .found-screen{min-height:calc(100vh - 76px)!important;padding-top:0!important}
 .found-head{padding:4px 0 6px!important}
 .trail-switcher{padding:4px 0 5px!important}
@@ -680,3 +680,117 @@ body[data-view="ideasView"] .topbar{margin-bottom:12px}
   .trail-node{width:15px!important;height:15px!important}
   .trail-node.is-keep{width:30px!important;height:30px!important}
 }
+
+
+/* V0.6.4 — THE MARKS
+   Found is a field of traces, not a route. No edges. No stars. No footprints. */
+html,body{overflow-x:hidden;overflow-anchor:none}
+body[data-view="homeView"],body[data-view="journalView"],body[data-view="ideasView"]{overflow-y:hidden}
+
+/* Every primary view is a viewport, not a document you have to hunt through. */
+#homeView.home-gateway{height:calc(100dvh - 76px)!important;min-height:0!important;padding:0!important;overflow:hidden!important}
+#homeView .home-logo-stage{height:100%!important;min-height:0!important;position:relative!important;top:auto!important;transform:none!important}
+#journalView.journal-screen{height:calc(100dvh - 76px)!important;min-height:0!important;overflow:hidden!important;padding:8px 0 92px!important}
+#journalView .journal-head{padding:10px 0 18px!important}
+#journalView .entries{max-height:calc(100dvh - 230px);overflow:auto;padding-bottom:20px}
+#ideasView.found-screen{height:calc(100dvh - 76px)!important;min-height:0!important;overflow:hidden!important;padding:0 0 92px!important}
+
+/* FOUND: the ground fills the screen below the quiet header. */
+#ideasView .found-head{height:74px;padding:4px 0 0!important;display:flex;align-items:flex-start!important}
+#ideasView .found-head h2{font-size:clamp(46px,7vw,76px)!important;line-height:.8!important;margin:0!important}
+#ideasView .found-head p{display:none!important}
+#ideasView .found-meta{padding-top:4px}
+#ideasView .trail-switcher{height:32px;padding:0!important;display:flex;align-items:center;gap:7px;overflow-x:auto}
+#ideasView .trail-chip{opacity:.55}
+#ideasView .trail-map-wrap{height:calc(100dvh - 190px)!important;min-height:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#ideasView .trail-map{height:100%!important;min-height:0!important;border-radius:0!important;overflow:hidden!important;position:relative;background:var(--trail-bg,#141313)!important;box-shadow:none!important}
+#ideasView .trail-map::before{background:radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,.34) 100%)!important;z-index:1}
+
+/* A field has no route line, terminal, beacon, or navigation geometry. */
+#ideasView .trail-route,
+#ideasView .trail-route-shadow,
+#ideasView .trail-route-line,
+#ideasView .trail-route-beacon,
+#ideasView .trail-terminal,
+#ideasView .trail-footstep,
+#ideasView .trail-road{display:none!important}
+
+.marks-caption{position:absolute;left:24px;top:18px;z-index:5;display:flex;gap:10px;align-items:baseline;color:var(--trail-ink,#eee);opacity:.62;pointer-events:none;text-transform:uppercase;letter-spacing:.16em;font-size:9px;font-weight:800}
+.marks-caption small{font-size:8px;letter-spacing:.08em;opacity:.58;font-weight:500}
+
+/* Marks are physical traces: irregular, quiet, varied. They are not pins. */
+.trail-mark{position:absolute;z-index:4;width:22px;height:22px;padding:0;border:0;background:transparent;color:transparent;transform:translate(-50%,-50%) scale(var(--mark-scale,.8));cursor:pointer;overflow:visible;transition:transform .45s cubic-bezier(.18,.86,.2,1),filter .35s ease}
+.trail-mark-core{position:absolute;inset:0;display:block;background:var(--trail-earth,#806b55);opacity:.68;box-shadow:0 4px 10px rgba(0,0,0,.34),inset 1px 1px 2px rgba(255,245,225,.14);transition:opacity .35s ease,box-shadow .35s ease,background .35s ease}
+.trail-mark.mark-0 .trail-mark-core{border-radius:46% 54% 62% 38%;transform:rotate(-17deg) scale(.88);clip-path:polygon(9% 19%,74% 3%,96% 35%,81% 88%,29% 100%,2% 58%)}
+.trail-mark.mark-1 .trail-mark-core{border-radius:55% 45% 39% 61%;transform:rotate(11deg) scale(.72);clip-path:polygon(18% 4%,88% 17%,100% 68%,61% 97%,9% 82%,0 31%)}
+.trail-mark.mark-2 .trail-mark-core{border-radius:52% 48% 58% 42%;transform:rotate(34deg) scale(.92);clip-path:polygon(0 34%,31% 7%,89% 14%,100% 57%,67% 100%,17% 82%)}
+.trail-mark.mark-3 .trail-mark-core{border-radius:61% 39% 49% 51%;transform:rotate(-8deg) scale(.65);clip-path:polygon(13% 0,78% 10%,100% 49%,73% 95%,25% 100%,0 48%)}
+.trail-mark.mark-4 .trail-mark-core{border-radius:40% 60% 63% 37%;transform:rotate(19deg) scale(.82);clip-path:polygon(8% 22%,54% 0,100% 25%,86% 79%,39% 100%,0 64%)}
+.trail-mark.mark-5 .trail-mark-core{border-radius:53% 47% 35% 65%;transform:rotate(-28deg) scale(.75);clip-path:polygon(25% 4%,91% 18%,100% 61%,56% 100%,7% 79%,0 32%)}
+.trail-mark.mark-6 .trail-mark-core{border-radius:58% 42% 52% 48%;transform:rotate(5deg) scale(.96);clip-path:polygon(4% 27%,44% 0,95% 12%,100% 61%,68% 100%,18% 87%)}
+
+/* Category only changes pigment. There is no legend. */
+.trail-mark:nth-of-type(2n) .trail-mark-core{background:var(--trail-earth,#806b55)}
+.trail-mark:nth-of-type(3n) .trail-mark-core{background:var(--trail-accent,#b8875a);opacity:.56}
+.trail-mark:nth-of-type(5n) .trail-mark-core{background:var(--trail-ink,#d8c3a5);opacity:.38}
+
+/* KEEP means pressure / permanence, not reward. */
+.trail-mark.is-keep{z-index:7}
+.trail-mark.is-keep .trail-mark-core{background:var(--trail-keep,#e8c78d)!important;opacity:.9;box-shadow:0 6px 16px rgba(0,0,0,.38),0 0 0 5px color-mix(in srgb,var(--trail-keep,#e8c78d) 10%,transparent);}
+.trail-mark:hover,.trail-mark:focus-visible{z-index:30;transform:translate(-50%,-50%) scale(calc(var(--mark-scale,.8) * 1.45));filter:brightness(1.1)}
+.trail-mark.is-keep:hover,.trail-mark.is-keep:focus-visible{transform:translate(-50%,-50%) scale(calc(var(--mark-scale,.8) * 1.18))}
+.trail-mark:focus-visible{outline:1px solid rgba(255,255,255,.35);outline-offset:7px}
+.trail-mark .trail-node-pop{bottom:30px;left:50%;transform:translate(-50%,8px) scale(.96);opacity:0;pointer-events:none;position:absolute;width:210px;z-index:50;transition:opacity .28s ease,transform .35s ease}
+.trail-mark:hover .trail-node-pop,.trail-mark:focus-visible .trail-node-pop{opacity:1;transform:translate(-50%,0) scale(1)}
+
+/* Palette worlds: each trail gets its own chapter atmosphere. */
+#ideasView .trail-map[data-palette="electric-clay"]{--trail-bg:#151115;--trail-earth:#d36f4a;--trail-accent:#62b9d8;--trail-ink:#f0d0a8;--trail-keep:#f5c56b}
+#ideasView .trail-map[data-palette="moss-lilac"]{--trail-bg:#111613;--trail-earth:#70845d;--trail-accent:#aa88d6;--trail-ink:#d7d7bd;--trail-keep:#e5d47d}
+#ideasView .trail-map[data-palette="river-coral"]{--trail-bg:#101619;--trail-earth:#4f8d91;--trail-accent:#e47d6d;--trail-ink:#c8dddd;--trail-keep:#f0ca8a}
+#ideasView .trail-map[data-palette="ochre-cobalt"]{--trail-bg:#17130e;--trail-earth:#bd8240;--trail-accent:#547bd1;--trail-ink:#ecd3a7;--trail-keep:#f1c85e}
+#ideasView .trail-map[data-palette="dust-rose"]{--trail-bg:#171316;--trail-earth:#8d6570;--trail-accent:#c99a75;--trail-ink:#e3cbd0;--trail-keep:#e5bf91}
+
+@media(max-width:700px){
+  #journalView.journal-screen{height:calc(100dvh - 70px)!important;padding-top:6px!important}
+  #ideasView.found-screen{height:calc(100dvh - 70px)!important;padding-bottom:82px!important}
+  #ideasView .found-head{height:62px}
+  #ideasView .found-head h2{font-size:52px!important}
+  #ideasView .trail-map-wrap{height:calc(100dvh - 164px)!important}
+  .marks-caption{left:16px;top:14px}
+  .trail-mark .trail-node-pop{width:170px}
+}
+
+/* V0.6.4 FINAL — THE MARKS: sediment, impressions, no route. */
+#ideasView .trail-map{background:
+  radial-gradient(circle at 20% 30%, color-mix(in srgb,var(--trail-accent,#62b9d8) 14%,transparent), transparent 34%),
+  radial-gradient(circle at 78% 68%, color-mix(in srgb,var(--trail-earth,#d36f4a) 13%,transparent), transparent 38%),
+  var(--trail-bg,#151115)!important;
+  isolation:isolate;
+}
+#ideasView .trail-map::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;opacity:.16;background-image:radial-gradient(rgba(255,255,255,.45) .5px,transparent .7px);background-size:5px 5px;mix-blend-mode:soft-light}
+.marks-caption{display:none!important}
+.trail-mark{width:34px;height:34px;transition:transform .5s cubic-bezier(.18,.86,.2,1),filter .4s ease}
+.trail-mark-core{background:var(--trail-earth)!important;opacity:var(--mark-opacity,.52)!important;box-shadow:inset 1px 1px 2px rgba(255,245,225,.10),0 5px 14px rgba(0,0,0,.28)!important;filter:saturate(.88)}
+/* Different physical impressions, not icons. */
+.trail-mark.mark-0 .trail-mark-core{clip-path:polygon(5% 31%,22% 8%,70% 2%,96% 27%,87% 73%,62% 96%,18% 86%,0 58%);transform:rotate(-18deg) scale(.72)}
+.trail-mark.mark-1 .trail-mark-core{clip-path:polygon(13% 6%,77% 0,98% 28%,84% 68%,58% 96%,17% 88%,0 43%);transform:rotate(13deg) scale(.52)}
+.trail-mark.mark-2 .trail-mark-core{clip-path:polygon(0 46%,20% 12%,56% 4%,100% 34%,86% 79%,48% 100%,11% 82%);transform:rotate(29deg) scale(.82)}
+.trail-mark.mark-3 .trail-mark-core{clip-path:polygon(7% 16%,44% 0,88% 15%,100% 54%,74% 91%,28% 100%,0 61%);transform:rotate(-6deg) scale(.43)}
+.trail-mark.mark-4 .trail-mark-core{clip-path:polygon(15% 0,75% 8%,100% 45%,77% 100%,29% 92%,0 54%);transform:rotate(21deg) scale(.62)}
+.trail-mark.mark-5 .trail-mark-core{clip-path:polygon(24% 3%,91% 22%,98% 64%,62% 100%,8% 79%,0 33%);transform:rotate(-31deg) scale(.48)}
+.trail-mark.mark-6 .trail-mark-core{clip-path:polygon(4% 27%,45% 0,96% 12%,100% 62%,68% 100%,18% 87%);transform:rotate(4deg) scale(.9)}
+/* Time settles older impressions. KEEP is pressure/depth, not a trophy. */
+.trail-mark.is-wander .trail-mark-core{filter:saturate(.75) blur(.08px)}
+.trail-mark.is-keep .trail-mark-core{opacity:.9!important;filter:saturate(1.08);box-shadow:inset 2px 2px 4px rgba(255,245,225,.13),inset -2px -2px 5px rgba(0,0,0,.18),0 8px 20px rgba(0,0,0,.38)!important}
+.trail-mark.is-keep::before{content:"";position:absolute;inset:8px;border-radius:50%;background:rgba(255,248,232,.12);filter:blur(2px);pointer-events:none}
+.trail-mark:hover .trail-mark-core,.trail-mark:focus-visible .trail-mark-core{filter:saturate(1.12) brightness(1.08)!important}
+.trail-mark .trail-node-pop{bottom:38px}
+
+/* Destination-first navigation: every section fills the viewport under the shell. */
+html,body{scroll-behavior:auto!important}
+body[data-view="entryView"] .topbar,body[data-view="journalView"] .topbar,body[data-view="ideasView"] .topbar{margin-bottom:0}
+#entryView.view{min-height:calc(100dvh - 76px)!important;padding-top:0!important}
+#entryView .section-head{padding-top:6px!important}
+#journalView.journal-screen{height:calc(100dvh - 76px)!important;overflow:hidden!important}
+#ideasView.found-screen{height:calc(100dvh - 76px)!important;overflow:hidden!important}
+#ideasView .trail-map-wrap{height:calc(100dvh - 180px)!important}

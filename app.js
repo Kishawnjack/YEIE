@@ -25,7 +25,7 @@ const formatDate=iso=>new Date(iso).toLocaleString([],{month:"short",day:"numeri
 const isLocked=e=>Date.now()-new Date(e.createdAt).getTime()>=LOCK_HOURS*3600000;
 
 let currentView="homeView";
-// V0.6.3 — never restore an old browser scroll position when entering YEIE.
+// V0.6.4 — never restore an old browser scroll position when entering YEIE.
 if("scrollRestoration" in history) history.scrollRestoration="manual";
 let pageTravelTimer=null;
 let activeTrailId=null;
@@ -38,11 +38,14 @@ function showView(id,travel=true){
   const commit=()=>{
     if(from==="wanderView" && id!=="wanderView") leaveWanderWorld();
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-    $(id).classList.add("active");
+    const target=$(id);
+    if(target) target.classList.add("active");
     document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===id));
     currentView=id;
     document.body.dataset.view=id;
-    window.scrollTo({top:0,left:0,behavior:"instant"});
+    // Hard reset first, then reset again after the new view paints.
+    window.scrollTo(0,0);
+    requestAnimationFrame(()=>{ window.scrollTo(0,0); requestAnimationFrame(()=>window.scrollTo(0,0)); });
   };
   if(!needsPortal){commit();return;}
   const portal=$("pagePortal");
@@ -148,51 +151,49 @@ function recordTrailNode(item,action="encounter"){
 function trailCategory(cat){
   return String(cat||"unsure").toLowerCase();
 }
-function trailPoints(nodes){
+function hash01(str){
+  let h=2166136261;
+  for(let i=0;i<String(str).length;i++){h^=String(str).charCodeAt(i);h=Math.imul(h,16777619);}
+  return (h>>>0)/4294967295;
+}
+function layoutMarks(nodes){
   if(!nodes.length)return [];
-  const cols=Math.min(7,Math.max(1,Math.ceil(Math.sqrt(nodes.length*1.45))));
-  const rows=Math.ceil(nodes.length/cols);
-  const left=10,right=90,top=17,bottom=84;
-  const points=[];
-  for(let i=0;i<nodes.length;i++){
-    const row=Math.floor(i/cols), slot=i%cols;
-    const rowCount=Math.min(cols,nodes.length-row*cols);
-    const reverse=row%2===1;
-    const logical=reverse?(rowCount-1-slot):slot;
-    const rowSpan=Math.max(1,rowCount-1);
-    const baseX=left+(logical/rowSpan)*(right-left);
-    const baseY=top+(row/Math.max(1,rows-1))*(bottom-top);
-    const cat=trailCategory(nodes[i].category);
-    const lane={sound:-2.2,words:1.4,film:2.6,visuals:-1.1,thoughts:2.1,unsure:0}[cat]||0;
-    const sway=Math.sin(i*1.37)*2.4 + Math.sin(i*.43)*1.2;
-    const x=Math.max(7,Math.min(93,baseX + (row%2 ? -sway : sway)));
-    const y=Math.max(12,Math.min(89,baseY + lane + Math.cos(i*.91)*1.7));
-    points.push({x:Number(x.toFixed(2)),y:Number(y.toFixed(2))});
+  const cats=["sound","words","film","visuals","thoughts","unsure"];
+  const basin={sound:-19,words:8,film:18,visuals:-5,thoughts:15,unsure:0};
+  const marks=[];
+  const sorted=nodes.map((n,i)=>({n,i}));
+  const times=sorted.map(x=>new Date(x.n.createdAt||0).getTime());
+  const minT=Math.min(...times), maxT=Math.max(...times), span=Math.max(1,maxT-minT);
+  sorted.forEach(({n,i})=>{
+    const cat=trailCategory(n.category);
+    const time=(new Date(n.createdAt||0).getTime()-minT)/span;
+    const hx=hash01(n.id+':x'), hy=hash01(n.id+':y');
+    // Time drifts left-to-right, but the field is intentionally not a timeline.
+    let x=12 + time*76 + (hx-.5)*15;
+    let y=50 + (hy-.5)*62 + (basin[cat]||0) + Math.sin(i*.77)*3;
+    // Gentle attraction toward neighbors of similar categories without drawing edges.
+    const prior=marks.filter(m=>m.cat===cat).slice(-3);
+    if(prior.length){
+      const avg=prior.reduce((a,m)=>a+m.y,0)/prior.length;
+      y=y*.72+avg*.28;
+    }
+    x=Math.max(7,Math.min(93,x)); y=Math.max(12,Math.min(88,y));
+    marks.push({x:+x.toFixed(2),y:+y.toFixed(2),cat,weight:n.action==="keep"?1.75:0.72+hash01(n.id+':w')*.25,index:i});
+  });
+  // Soft collision pass: separate marks that would otherwise become one blob.
+  for(let pass=0;pass<3;pass++) for(let i=0;i<marks.length;i++) for(let j=i+1;j<marks.length;j++){
+    const a=marks[i],b=marks[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);
+    if(d<4.2){ const push=(4.2-d)/2, nx=dx/(d||1), ny=dy/(d||1); a.x+=nx*push; a.y+=ny*push; b.x-=nx*push; b.y-=ny*push; }
   }
-  return points;
-}
-function trailSegmentClass(a,b){
-  const ca=trailCategory(a?.category), cb=trailCategory(b?.category);
-  return ca===cb ? `segment-${ca}` : "segment-mixed";
-}
-function smoothTrailPath(points){
-  if(!points.length)return "";
-  if(points.length===1)return `M ${points[0].x} ${points[0].y}`;
-  let d=`M ${points[0].x} ${points[0].y}`;
-  for(let i=0;i<points.length-1;i++){
-    const a=points[i],b=points[i+1];
-    const midX=(a.x+b.x)/2, midY=(a.y+b.y)/2;
-    d+=` Q ${midX} ${a.y} ${midX} ${midY} T ${b.x} ${b.y}`;
-  }
-  return d;
+  return marks.map(m=>({...m,x:+Math.max(5,Math.min(95,m.x)).toFixed(2),y:+Math.max(9,Math.min(91,m.y)).toFixed(2)}));
 }
 function trailPalette(trail,index){
   const palettes=[
-    {name:"clay",ink:"#d8c3a5",earth:"#7f6650",accent:"#b8875a",keep:"#e8c78d",path:"#9a8065",bg:"#171513"},
-    {name:"moss",ink:"#c7c6a8",earth:"#59634d",accent:"#87966a",keep:"#d8c98d",path:"#69745a",bg:"#151713"},
-    {name:"river",ink:"#b8c3c2",earth:"#536a6b",accent:"#789293",keep:"#d5c6a0",path:"#617b7b",bg:"#141718"},
-    {name:"ochre",ink:"#d3b98f",earth:"#765d42",accent:"#aa8051",keep:"#e0c48c",path:"#8b6b4d",bg:"#181513"},
-    {name:"dust",ink:"#c8b8ad",earth:"#6e5d55",accent:"#987a6c",keep:"#dbc19f",path:"#7c675e",bg:"#171514"}
+    {name:"electric-clay",ink:"#f0d0a8",earth:"#d36f4a",accent:"#62b9d8",keep:"#f5c56b",bg:"#151115"},
+    {name:"moss-lilac",ink:"#d7d7bd",earth:"#70845d",accent:"#aa88d6",keep:"#e5d47d",bg:"#111613"},
+    {name:"river-coral",ink:"#c8dddd",earth:"#4f8d91",accent:"#e47d6d",keep:"#f0ca8a",bg:"#101619"},
+    {name:"ochre-cobalt",ink:"#ecd3a7",earth:"#bd8240",accent:"#547bd1",keep:"#f1c85e",bg:"#17130e"},
+    {name:"dust-rose",ink:"#e3cbd0",earth:"#8d6570",accent:"#c99a75",keep:"#e5bf91",bg:"#171316"}
   ];
   return palettes[(Math.max(0,index)+palettes.length)%palettes.length];
 }
@@ -200,49 +201,27 @@ function renderTrail(id){
   const trail=state.trails.find(t=>t.id===id); if(!trail)return;
   const trailIndex=state.trails.findIndex(t=>t.id===id);
   const palette=trailPalette(trail,trailIndex);
-  const map=$("trailMap"), nodes=trail.nodes||[], points=trailPoints(nodes);
-  // Backfill metadata for trails created before V0.6.
+  const map=$("trailMap"), nodes=trail.nodes||[], marks=layoutMarks(nodes);
   nodes.forEach(n=>{n.itemId ??=n.id; n.createdAt ??=trail.startedAt;});
-  const routeParts=[];
-  for(let i=0;i<points.length-1;i++){
-    const d=smoothTrailPath([points[i],points[i+1]]);
-    routeParts.push(`<path class="trail-route-line ${trailSegmentClass(nodes[i],nodes[i+1])}" d="${d}"/>`);
-  }
-  const markerStart=points[0],markerEnd=points[points.length-1];
-  const svg=`<svg class="trail-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-    <defs>
-      <filter id="trailGlow"><feGaussianBlur stdDeviation="1.1" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    </defs>
-    <path class="trail-route-shadow" d="${smoothTrailPath(points)}"/>
-    ${routeParts.join("")}
-    ${points.filter((_,i)=>i>0&&i<nodes.length-1&&i%3===0).map(p=>`<circle class="trail-route-beacon" cx="${p.x}" cy="${p.y}" r=".48"/>`).join("")}
-  </svg>`;
-  const startMarkup=markerStart?`<div class="trail-terminal trail-start" style="left:${markerStart.x}%;top:${markerStart.y}%"><span>START</span></div>`:"";
-  const endMarkup=markerEnd?`<div class="trail-terminal trail-end" style="left:${markerEnd.x}%;top:${markerEnd.y}%"><span>NOW</span></div>`:"";
   map.dataset.palette=palette.name;
   map.style.setProperty("--trail-ink",palette.ink);
   map.style.setProperty("--trail-earth",palette.earth);
   map.style.setProperty("--trail-accent",palette.accent);
   map.style.setProperty("--trail-keep",palette.keep);
-  map.style.setProperty("--trail-path",palette.path);
   map.style.setProperty("--trail-bg",palette.bg);
-  const footprints=points.slice(0,-1).map((p,i)=>`<span class="trail-footstep" style="left:${p.x}%;top:${p.y}%;--step-rotation:${(i%2?-9:9)+(i%3-1)*2}deg" aria-hidden="true"><i></i><i></i></span>`).join("");
-  map.innerHTML=`<div class="trail-map-title"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div>${svg}${startMarkup}${endMarkup}${footprints}`+
-    nodes.map((n,i)=>{
-      const keep=n.action==="keep";
-      const cat=trailCategory(n.category);
-      const p=points[i]||{x:50,y:50};
-      const sequence=i+1;
-      return `<button class="trail-node node-${esc(cat)} ${keep?"is-keep":"is-wander"}" style="left:${p.x}%;top:${p.y}%" data-node="${esc(n.id)}" aria-label="Stop ${sequence}: ${esc(n.title)}"><span class="trail-node-mark" aria-hidden="true"></span><span class="trail-node-pop">${nodePreview(n)}<small class="trail-node-action">${keep?"KEPT":"WANDERED"}</small></span></button>`;
-    }).join("");
+  const title=`<div class="marks-caption"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div>`;
+  map.innerHTML=title+nodes.map((n,i)=>{
+    const keep=n.action==="keep", m=marks[i]||{x:50,y:50,weight:.72};
+    const size=(keep?1.55:1)*m.weight;
+    return `<button class="trail-mark ${keep?"is-keep":"is-wander"} mark-${i%7}" style="left:${m.x}%;top:${m.y}%;--mark-scale:${size.toFixed(2)}" data-node="${esc(n.id)}" aria-label="${keep?"Kept":"Wandered"}: ${esc(n.title)}"><span class="trail-mark-core" aria-hidden="true"></span><span class="trail-node-pop">${nodePreview(n)}<small class="trail-node-action">${keep?"KEPT":"WANDERED"}</small></span></button>`;
+  }).join("");
   map.querySelectorAll("[data-node]").forEach(btn=>btn.onclick=()=>openTrailNode(btn.dataset.node,trail.id));
 }
-
 function openTrailNode(nodeId,trailId){
   const trail=state.trails.find(t=>t.id===trailId), n=trail?.nodes.find(x=>x.id===nodeId); if(!n)return;
   const detail=$("trailDetail");
   detail.classList.remove("hidden");
-  detail.innerHTML=`<button id="closeTrailDetail" class="detail-close" type="button">×</button>${nodePreview(n)}<div class="detail-type">STOP ${trail.nodes.indexOf(n)+1} · ${esc(n.type||n.category||"DISCOVERY")}</div><p>${esc(n.content||"")}</p>${n.creator?`<div class="detail-creator">${esc(n.creator)}</div>`:""}${n.sourceUrl?`<a href="${esc(n.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="detail-source">DISCOVER THE SOURCE ↗</a>`:""}`;
+  detail.innerHTML=`<button id="closeTrailDetail" class="detail-close" type="button">×</button>${nodePreview(n)}<div class="detail-type">${esc(n.type||n.category||"DISCOVERY")}</div><p>${esc(n.content||"")}</p>${n.creator?`<div class="detail-creator">${esc(n.creator)}</div>`:""}${n.sourceUrl?`<a href="${esc(n.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="detail-source">DISCOVER THE SOURCE ↗</a>`:""}`;
   $("closeTrailDetail").onclick=()=>detail.classList.add("hidden");
 }
 function updateAutosaveStatus(){
@@ -895,7 +874,7 @@ document.querySelectorAll(".nav-btn").forEach(b=>{
     e.stopPropagation();
     const view=b.dataset.view;
     if(!view || !document.getElementById(view)) return;
-    if(view==="journalView") renderJournal();
+    if(view==="journalView") { createEntry(); return; }
     if(view==="ideasView"){ renderFound(); $("trailDetail").classList.add("hidden"); }
     showView(view);
   });
