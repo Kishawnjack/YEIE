@@ -158,34 +158,30 @@ function hash01(str){
 }
 function layoutMarks(nodes){
   if(!nodes.length)return [];
-  const cats=["sound","words","film","visuals","thoughts","unsure"];
-  const basin={sound:-19,words:8,film:18,visuals:-5,thoughts:15,unsure:0};
+  // V0.6.5 — THE WORLD: discoveries travel along a living forest path.
+  // The path is readable, but it loops, bends, and occasionally doubles back.
   const marks=[];
-  const sorted=nodes.map((n,i)=>({n,i}));
-  const times=sorted.map(x=>new Date(x.n.createdAt||0).getTime());
-  const minT=Math.min(...times), maxT=Math.max(...times), span=Math.max(1,maxT-minT);
-  sorted.forEach(({n,i})=>{
-    const cat=trailCategory(n.category);
-    const time=(new Date(n.createdAt||0).getTime()-minT)/span;
-    const hx=hash01(n.id+':x'), hy=hash01(n.id+':y');
-    // Time drifts left-to-right, but the field is intentionally not a timeline.
-    let x=12 + time*76 + (hx-.5)*15;
-    let y=50 + (hy-.5)*62 + (basin[cat]||0) + Math.sin(i*.77)*3;
-    // Gentle attraction toward neighbors of similar categories without drawing edges.
-    const prior=marks.filter(m=>m.cat===cat).slice(-3);
-    if(prior.length){
-      const avg=prior.reduce((a,m)=>a+m.y,0)/prior.length;
-      y=y*.72+avg*.28;
-    }
-    x=Math.max(7,Math.min(93,x)); y=Math.max(12,Math.min(88,y));
-    marks.push({x:+x.toFixed(2),y:+y.toFixed(2),cat,weight:n.action==="keep"?1.75:0.72+hash01(n.id+':w')*.25,index:i});
+  const n=Math.max(1,nodes.length);
+  nodes.forEach((node,i)=>{
+    const t=n===1?.5:i/(n-1);
+    // A winding loop: mostly forward, with two broad bends and a gentle return.
+    let x=10 + t*80 + Math.sin(t*Math.PI*2.2)*10 + Math.sin(t*Math.PI*5.1)*2.2;
+    let y=74 - t*47 + Math.sin(t*Math.PI*2.05)*25 + Math.sin(t*Math.PI*6.4)*3.5;
+    // Keep the first/last stops visually grounded.
+    if(i===0){x=11;y=78;}
+    if(i===n-1){x=88;y=20;}
+    // Small deterministic drift so adjacent stops never feel stamped.
+    const h=hash01(node.id+':world');
+    x += (h-.5)*4.5;
+    y += (hash01(node.id+':worldY')-.5)*4.5;
+    x=Math.max(8,Math.min(92,x)); y=Math.max(12,Math.min(86,y));
+    marks.push({x:+x.toFixed(2),y:+y.toFixed(2),cat:trailCategory(node.category),weight:node.action==='keep'?1.7:.82+hash01(node.id+':w')*.18,index:i});
   });
-  // Soft collision pass: separate marks that would otherwise become one blob.
-  for(let pass=0;pass<3;pass++) for(let i=0;i<marks.length;i++) for(let j=i+1;j<marks.length;j++){
-    const a=marks[i],b=marks[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);
-    if(d<4.2){ const push=(4.2-d)/2, nx=dx/(d||1), ny=dy/(d||1); a.x+=nx*push; a.y+=ny*push; b.x-=nx*push; b.y-=ny*push; }
-  }
-  return marks.map(m=>({...m,x:+Math.max(5,Math.min(95,m.x)).toFixed(2),y:+Math.max(9,Math.min(91,m.y)).toFixed(2)}));
+  return marks;
+}
+function forestPathD(){
+  // A physical trail: filled ribbon rather than an abstract connector line.
+  return 'M 92 18 C 83 23, 80 29, 83 35 C 86 42, 77 45, 69 43 C 58 40, 57 49, 62 55 C 68 62, 55 66, 45 62 C 33 57, 27 65, 32 71 C 38 78, 24 82, 10 78 L 10 82 C 25 87, 43 82, 37 73 C 31 64, 45 60, 54 64 C 66 69, 73 62, 66 54 C 60 47, 62 44, 70 47 C 82 51, 91 43, 87 34 C 84 28, 88 23, 94 20 Z';
 }
 function trailPalette(trail,index){
   const palettes=[
@@ -210,9 +206,10 @@ function renderTrail(id){
   map.style.setProperty("--trail-keep",palette.keep);
   map.style.setProperty("--trail-bg",palette.bg);
   const title=`<div class="marks-caption"><span>${esc(trail.title)}</span><small>${new Date(trail.startedAt).toLocaleDateString([], {month:"short",day:"numeric"})} → ${new Date(trail.endsAt).toLocaleDateString([], {month:"short",day:"numeric"})}</small></div>`;
-  map.innerHTML=title+nodes.map((n,i)=>{
+  const world=`<div class="trail-world" aria-hidden="true"><div class="forest-haze haze-a"></div><div class="forest-haze haze-b"></div><div class="forest-ridge ridge-back"></div><div class="forest-ridge ridge-front"></div><div class="forest-floor"></div><svg class="world-path" viewBox="0 0 100 100" preserveAspectRatio="none"><path class="world-path-shadow" d="${forestPathD()}"></path><path class="world-path-surface" d="${forestPathD()}"></path><path class="world-path-worn" d="M 92 19 C 82 24, 80 29, 83 35 C 86 42, 77 45, 69 43 C 58 40, 57 49, 62 55 C 68 62, 55 66, 45 62 C 33 57, 27 65, 32 71 C 38 78, 24 82, 11 79"></path></svg></div>`;
+  map.innerHTML=title+world+nodes.map((n,i)=>{
     const keep=n.action==="keep", m=marks[i]||{x:50,y:50,weight:.72};
-    const size=(keep?1.55:1)*m.weight;
+    const size=(keep?1.35:1)*m.weight;
     return `<button class="trail-mark ${keep?"is-keep":"is-wander"} mark-${i%7}" style="left:${m.x}%;top:${m.y}%;--mark-scale:${size.toFixed(2)}" data-node="${esc(n.id)}" aria-label="${keep?"Kept":"Wandered"}: ${esc(n.title)}"><span class="trail-mark-core" aria-hidden="true"></span><span class="trail-node-pop">${nodePreview(n)}<small class="trail-node-action">${keep?"KEPT":"WANDERED"}</small></span></button>`;
   }).join("");
   map.querySelectorAll("[data-node]").forEach(btn=>btn.onclick=()=>openTrailNode(btn.dataset.node,trail.id));
